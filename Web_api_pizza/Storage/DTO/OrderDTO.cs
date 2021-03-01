@@ -1,4 +1,6 @@
 ﻿using System;
+using Web_api_pizza.Storage.Enums;
+
 namespace CreateDb.Storage.DTO
 {
     public class OrderDTO
@@ -11,17 +13,10 @@ namespace CreateDb.Storage.DTO
         //public List<OrderMenuEntity> Products { get; set; }
 
         public DateTime CreatTime { get; set; }
-        public StatusDTO Status { get; set; }
+        public StatusEnum Status { get; set; }
 
         //public AddressOrderEntity AddressOrder { get; set; }
     }
-    public enum StatusDTO
-    {
-        New = 1,
-        Preparing,
-        OnTheWay,
-        Delivered,
-        Cancelled
-    }
+    
 
 }

@@ -6,37 +6,46 @@ using CreateDb.Storage;
 using CreateDb.Storage.DTO;
 using CreateDb.Storage.Models;
 using Microsoft.EntityFrameworkCore;
+using Web_api_pizza.Storage.Enums;
 
 namespace Web_api_pizza.Services
 {
     public interface IOrderService
     {
-
+        public List<OrderDTO> GetAllOrders(int customerId = 0);
+        public OrderDTO GetOneOrder(int id);
+        public string ChangeOrderStatus(int orderId, string orderStatus);
+        public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0);
     }
-    public class OrderService :IOrderService
+    public class OrderService : IOrderService
     {
-        private readonly Mapper _mapper;
+        private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        public OrderService(Mapper mapper, PizzaDbContext context)
+        public OrderService(IMapper mapper, PizzaDbContext context)
         {
             _mapper = mapper;
             _context = context;
         }
-        readonly Dictionary<string, StatusDTO> OrderStatusesDic = new Dictionary<string, StatusDTO>
+        readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
         {
-            {"Новый", StatusDTO.New },
-            {"Готовится", StatusDTO.Preparing },
-            {"В пути", StatusDTO.OnTheWay},
-            {"Доставлен", StatusDTO.Delivered},
-            {"Отменен", StatusDTO.Cancelled}
+            {"Новый", StatusEnum.New },
+            {"Готовится", StatusEnum.Preparing },
+            {"В пути", StatusEnum.OnTheWay},
+            {"Доставлен", StatusEnum.Delivered},
+            {"Отменен", StatusEnum.Cancelled}
         };
 
-        public List<OrderDTO> GetAllOrders(CustomerEntity customer = null)
+        public List<OrderDTO> GetAllOrders(int customerId = 0)
         {
             List<OrderEntity> ordersEntity;
-            if (customer != null)
+            if (customerId != 0)
             {
-                ordersEntity = customer.Orders.ToList();
+                ordersEntity = _context.Orders
+                    .Include(o => o.Customer)
+                    .Where(o => o.CustomerEntityId == customerId)
+                    .Include(o => o.Products)
+                    .ThenInclude(p => p.Dish)
+                    .ToList();
             }
             else
             {
@@ -51,7 +60,12 @@ namespace Web_api_pizza.Services
         }
         public OrderDTO GetOneOrder(int id)
         {
-            var orderEntity = _context.Orders.FirstOrDefault(o => o.Id == id);
+            var orderEntity = _context.Orders.
+                Where(o => o.Id == id)
+                .Include(o => o.Customer)
+                .Include(o => o.Products)
+                .ThenInclude(p => p.Dish)
+                .FirstOrDefault();
             var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(orderEntity);
             return orderDTO;
         }
@@ -61,26 +75,34 @@ namespace Web_api_pizza.Services
             try
             {
                 var changeStatus = _context.Orders.FirstOrDefault(o => o.Id == orderId);
-                changeStatus.Status = (Status)OrderStatusesDic[orderStatus];
+                changeStatus.Status = OrderStatusesDic[orderStatus];
                 _context.SaveChanges();
                 return "Статус изменен";
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return $"Неудалось изменить статус {e.Message}";
             }
         }
 
-        public void CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
+        public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
-            var order = CustomerOrder(customerId);
-            foreach (var d in dishes)
+            try
             {
-                OrderDishes(order.Id, d.Id, d.Quantity);
+                var order = CustomerOrder(customerId);
+                foreach (var d in dishes)
+                {
+                    OrderDishes(order.Id, d.Id, d.Quantity);
+                }
+                if (addressId != 0)
+                {
+                    AddressOrder(order.Id, addressId);
+                }
+                return "Заказ создан";
             }
-            if(addressId != 0)
+            catch
             {
-                AddressOrder(order.Id, addressId);
+                return "Неверные данные заказа";
             }
         }
         private OrderEntity CustomerOrder(int customerId)
@@ -88,7 +110,7 @@ namespace Web_api_pizza.Services
             var order = new OrderEntity();
 
             order.CreatTime = DateTime.Now;
-            order.Status = Status.New;
+            order.Status = StatusEnum.New;
             if (customerId != 0)
             {
                 order.CustomerEntityId = customerId;

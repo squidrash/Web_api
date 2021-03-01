@@ -40,7 +40,7 @@ namespace Web_api_pizza.Controllers
 
         // POST api/menu/
         //Работает
-        [HttpPost]
+        [HttpPost("add")]
         public string AddToMenu(DishDTO dishes)
         {
             _menuService.AddToMenu(dishes);
@@ -49,15 +49,15 @@ namespace Web_api_pizza.Controllers
 
         // PUT api/menu/
         //работает
-        [HttpPut]
-        public void Put( DishDTO dish)
+        [HttpPut("edit")]
+        public void Edit( DishDTO dish)
         {
             _menuService.EditMenu(dish);
         }
 
         // DELETE api/menu/
         //Работает
-        [HttpDelete]
+        [HttpDelete("delete")]
         public string Delete(int id)
         {
             _menuService.RemoveFromMenu(id);

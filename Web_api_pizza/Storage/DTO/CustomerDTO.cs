@@ -16,7 +16,7 @@ namespace CreateDb.Storage.DTO
 
         [Required]
         public string Phone { get; set; }
-        public int Discount { get; set; }
+        public int Discount { get; set; } 
 
         //место для списка заказов
         public List<OrderDTO> Orders { get; set; }

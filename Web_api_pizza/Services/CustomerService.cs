@@ -17,17 +17,17 @@ namespace Web_api_pizza.Services
         //получаем клиента со всеми данныйми(заказы, адреса)
         public CustomerDTO GetCustomerWithAllInfo(int id);
 
-        public void RegistrationCustomer(CustomerDTO customer);
+        public string RegistrationCustomer(CustomerDTO customer);
 
         //Регистируем сразу несколько пользователей
         //public void RegistrationManyCustomers(List<CustomerDTO> customers)
 
-        public void DeleteCustomer(int id);
+        public string DeleteCustomer(int id);
 
         //удалить сразу несколько
         //public void DeleteManyCustomers(int[] customersId);
 
-        public void EditCustomer(CustomerDTO customer);
+        public string EditCustomer(CustomerDTO customer);
     }
     public class CustomerService : ICustomerService
     {
@@ -55,30 +55,44 @@ namespace Web_api_pizza.Services
         }
         public CustomerDTO GetCustomerWithAllInfo(int id)
         {
-            var customerEntity = _context.Customers
-                .Where(c => c.Id == id)
-                .Include(c => c.Orders)
-                .ThenInclude(o => o.Products)
-                .ThenInclude(p => p.Dish)
-                .Include(u => u.Addresses)
-                .ThenInclude(a => a.Address)
-                .FirstOrDefault(c => c.Id == id);
-            var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
-            return customerDTO;
+                var customerEntity = _context.Customers
+                    .Where(c => c.Id == id)
+                    .Include(c => c.Orders)
+                    .ThenInclude(o => o.Products)
+                    .ThenInclude(p => p.Dish)
+                    .Include(u => u.Addresses)
+                    .ThenInclude(a => a.Address)
+                    .FirstOrDefault(c => c.Id == id);
+                var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
+                return customerDTO;
         }
-        public void RegistrationCustomer(CustomerDTO customer)
+        public string RegistrationCustomer(CustomerDTO customer)
         {
-            var checkCustomer = _context.Customers
-                .Where(c => c.Name == customer.Name)
-                .Where(c => c.LastName == customer.LastName)
-                .Where(c => c.Phone == customer.Phone)
-                .FirstOrDefault();
-            if (checkCustomer == null)
+            try
             {
-                var customerEntity = _mapper.Map<CustomerDTO, CustomerEntity>(customer);
-                _context.Customers.Add(customerEntity);
+                string message;
+                var checkCustomer = _context.Customers
+                    .Where(c => c.Name == customer.Name)
+                    .Where(c => c.LastName == customer.LastName)
+                    .Where(c => c.Phone == customer.Phone)
+                    .FirstOrDefault();
+                if (checkCustomer == null)
+                {
+                    var customerEntity = _mapper.Map<CustomerDTO, CustomerEntity>(customer);
+                    _context.Customers.Add(customerEntity);
 
-                _context.SaveChanges();
+                    _context.SaveChanges();
+                    message = "Пользователь зарегистрирован";
+                }
+                else
+                {
+                    message = "Пользователь уже существует";
+                }
+                return message;
+            }
+            catch
+            {
+                return "Не удалось зарегистрировать пользователя";
             }
         }
         public void RegistrationManyCustomers(List<CustomerDTO> customers)
@@ -98,11 +112,29 @@ namespace Web_api_pizza.Services
             }
             _context.SaveChanges();
         }
-        public void DeleteCustomer(int id)
+        public string DeleteCustomer(int id)
         {
-            var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == id);
-            _context.Customers.Remove(removableCustomer);
-            _context.SaveChanges();
+            try
+            {
+                string message;
+                var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == id);
+                
+                if(removableCustomer == null)
+                {
+                    message = "Пользователь не найден";
+                }
+                else
+                {
+                    _context.Customers.Remove(removableCustomer);
+                    _context.SaveChanges();
+                    message = "Пользователь удален";
+                }
+                return message;
+            }
+            catch
+            {
+                return "Ошибка при удалении пользователя";
+            }
         }
         public void DeleteManyCustomers(int[] customersId)
         {
@@ -113,17 +145,34 @@ namespace Web_api_pizza.Services
             }
             _context.SaveChanges();
         }
-        public void EditCustomer(CustomerDTO customer)
+        public string EditCustomer(CustomerDTO customer)
         {
-            var infoCustomer = _context.Customers
+            try
+            {
+                string message;
+                var infoCustomer = _context.Customers
                 .FirstOrDefault(c => c.Id == customer.Id);
-
-            infoCustomer.Name = customer.Name;
-            infoCustomer.LastName = customer.LastName;
-            infoCustomer.Phone = customer.Phone;
-            infoCustomer.Discount = customer.Discount;
-
-            _context.SaveChanges();
+                if(infoCustomer == null)
+                {
+                    message = "Пользователь не найден";
+                }
+                else
+                {
+                    infoCustomer.Name = customer.Name;
+                    infoCustomer.LastName = customer.LastName;
+                    infoCustomer.Phone = customer.Phone;
+                    infoCustomer.Discount = customer.Discount;
+                    _context.SaveChanges();
+                    message = "Пользователь изменен";
+                }
+                
+                return message;
+            }
+            catch
+            {
+                return "Ошибка при изменении пользователя";
+            }
+            
         }
 
     }

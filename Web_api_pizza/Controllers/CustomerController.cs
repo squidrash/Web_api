@@ -48,8 +48,8 @@ namespace Web_api_pizza.Controllers
         [HttpPut("edit")]
         public string EditCustomer(CustomerDTO customer)
         {
-            _customerService.EditCustomer(customer);
-            return "пользователь изменен";
+             var  message =_customerService.EditCustomer(customer);
+            return message;
         }
 
         [HttpDelete("delete")]
