@@ -16,6 +16,7 @@ namespace Web_api_pizza.Services
         public OrderDTO GetOneOrder(int id);
         public string ChangeOrderStatus(int orderId, string orderStatus);
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0);
+        public string RemoveOrder(int id);
     }
     public class OrderService : IOrderService
     {
@@ -136,6 +137,30 @@ namespace Web_api_pizza.Services
             var addressOrder = new AddressOrderEntity { OrderEntityId = orderId, AddressEntityId = addressId };
             _context.AddressOrderEntities.Add(addressOrder);
             _context.SaveChanges();
+        }
+
+        public string RemoveOrder(int id)
+        {
+            string message;
+            try
+            {
+                var order = _context.Orders.FirstOrDefault(o => o.Id == id);
+                if(order == null)
+                {
+                    message = "Заказ не найден";
+                }
+                else
+                {
+                    _context.Orders.Remove(order);
+                    _context.SaveChanges();
+                    message = "Заказ удален";
+                }
+            }
+            catch
+            {
+                message = "Ошибка при удалении заказа";
+            }
+            return message;
         }
     }
 }

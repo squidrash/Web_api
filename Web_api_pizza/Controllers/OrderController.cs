@@ -17,6 +17,8 @@ namespace Web_api_pizza.Controllers
         {
             _orderService = orderService;
         }
+
+        //работает
         [HttpGet("all")]
         public List<OrderDTO> GetAllOrders()
         {
@@ -24,13 +26,14 @@ namespace Web_api_pizza.Controllers
             return orders;
         }
 
+        //работает
         [HttpGet("customer")]
         public List<OrderDTO> CustomerOrders(int id)
         {
             var orders = _orderService.GetAllOrders(id);
             return orders;
         }
-
+        //работает
         [HttpGet("specific")]
         public OrderDTO GetOneOrder(int id)
         {
@@ -38,20 +41,27 @@ namespace Web_api_pizza.Controllers
             return order;
         }
 
-        //[HttpPut("changeStatus")]
-        //public string ChangeStatus(int orderId, string orderStatus)
-        //{
-        //    var status = _orderService.ChangeOrderStatus(orderId, orderStatus);
-        //    return status;
-        //}
+        //работает
+        [HttpPut("changeStatus")]
+        public string ChangeStatus(int orderId, string orderStatus)
+        {
+            var status = _orderService.ChangeOrderStatus(orderId, orderStatus);
+            return status;
+        }
 
+        //работают все 3 
         [HttpPost("create")]
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
             var order = _orderService.CreateOrder(dishes, customerId, addressId);
             return order;
         }
-
-
+        //работает
+        [HttpDelete("delete")]
+        public string Delete(int id)
+        {
+            var order = _orderService.RemoveOrder(id);
+            return order;
+        }
     }
 }

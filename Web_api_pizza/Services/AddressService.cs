@@ -50,11 +50,11 @@ namespace Web_api_pizza.Services
             {
                 var findAddress = FindAddress(address);
                 var checkCustomerAddress = _context.CustomerAddressEntities
-                    .Where(c => c.CustomerEntityId == customerId && c.AddressEntityId == address.Id)
+                    .Where(c => c.CustomerEntityId == customerId && c.AddressEntityId == findAddress.Id)
                     .FirstOrDefault();
                 if(checkCustomerAddress == null)
                 {
-                    var customerAddress = new CustomerAddressEntity { AddressEntityId = address.Id, CustomerEntityId = customerId };
+                    var customerAddress = new CustomerAddressEntity { AddressEntityId = findAddress.Id, CustomerEntityId = customerId };
                     _context.CustomerAddressEntities.Add(customerAddress);
                     _context.SaveChanges();
                 }
