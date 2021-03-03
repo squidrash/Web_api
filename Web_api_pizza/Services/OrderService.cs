@@ -22,11 +22,19 @@ namespace Web_api_pizza.Services
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        public OrderService(IMapper mapper, PizzaDbContext context)
+        private readonly IMenuService _menuService;
+        private readonly IAddressService _addressService;
+        private readonly ICustomerService _customerService;
+        public OrderService(IMapper mapper, PizzaDbContext context, ICustomerService customerService,
+            IMenuService menuService, IAddressService addressService)
         {
             _mapper = mapper;
             _context = context;
+            _menuService = menuService;
+            _addressService = addressService;
+            _customerService = customerService;
         }
+
         readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
         {
             {"Новый", StatusEnum.New },
@@ -39,6 +47,7 @@ namespace Web_api_pizza.Services
         public List<OrderDTO> GetAllOrders(int customerId = 0)
         {
             List<OrderEntity> ordersEntity;
+
             if (customerId != 0)
             {
                 ordersEntity = _context.Orders
@@ -46,6 +55,7 @@ namespace Web_api_pizza.Services
                     .Where(o => o.CustomerEntityId == customerId)
                     .Include(o => o.Products)
                     .ThenInclude(p => p.Dish)
+                    .OrderByDescending(o => o.CreatTime)
                     .ToList();
             }
             else
@@ -54,40 +64,42 @@ namespace Web_api_pizza.Services
                     .Include(o => o.Customer)
                     .Include(o => o.Products)
                     .ThenInclude(p => p.Dish)
+                    .OrderByDescending(o=> o.CreatTime)
                     .ToList();
             }
-            var orders = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
-            return orders;
+            //var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
+            var ordersDTO = new List<OrderDTO>();
+            foreach (var o in ordersEntity)
+            {
+                var order = GetListDishes(o);
+                ordersDTO.Add(order);
+            }
+            return ordersDTO;
         }
+
+        // нужен литакой громоздкий метод???
         public OrderDTO GetOneOrder(int id)
         {
             var orderEntity = _context.Orders.
                 Where(o => o.Id == id)
-                .Include(o => o.Customer)
+                //.Include(o => o.Customer)
                 .Include(o => o.Products)
-                .ThenInclude(p => p.Dish)
+                .Include(o => o.AddressOrder)
                 .FirstOrDefault();
-            var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(orderEntity);
-            // первоначальный вариант
-            //var dishesList = GetListDishes(orderEntity);
-            //orderDTO.Dishes = dishesList;
-            return orderDTO;
-        }
-        private List<DishDTO> GetListDishes(OrderEntity order)
-        {
-            var dishesList = new List<DishDTO>();
-            foreach (var d in order.Products)
-            {
-                var dishEntity = _context.Dishes
-                    .FirstOrDefault(x => x.Id == d.DishEntityId);
-                var dishDTO = _mapper.Map<DishEntity, DishDTO>(dishEntity);
+            var getListDishes = GetListDishes(orderEntity);
+            var order = getListDishes;
 
-                var quantityDish = _context.OrderDishEntities
-                    .FirstOrDefault(x => x.OrderEntityId == order.Id);
-                dishDTO.Quantity =
-                dishesList.Add(dishDTO);
+            if(orderEntity.AddressOrder != null)
+            {
+                var getOrderAddress = GetOrderAddress(orderEntity.AddressOrder.AddressEntityId);
+                order.Address = getOrderAddress;
             }
-            return dishesList;
+            if(orderEntity.CustomerEntityId != null)
+            {
+                var getCustomerOrder = GetCustomerOrder((int)orderEntity.CustomerEntityId);
+                order.Client = getCustomerOrder;
+            }
+            return order;
         }
 
         public string ChangeOrderStatus(int orderId, string orderStatus)
@@ -109,15 +121,15 @@ namespace Web_api_pizza.Services
         {
             try
             {
-                var order = CustomerOrder(customerId);
+                var order = CreateCustomerOrder(customerId);
                 foreach (var d in dishes)
                 {
-                    OrderDishes(order.Id, (int)d.Id, d.Quantity);
+                    CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
 
                 }
                 if (addressId != 0)
                 {
-                    AddressOrder(order.Id, addressId);
+                    CreateAddressOrder(order.Id, addressId);
                 }
                 return "Заказ создан";
             }
@@ -125,38 +137,6 @@ namespace Web_api_pizza.Services
             {
                 return "Неверные данные заказа";
             }
-        }
-        private OrderEntity CustomerOrder(int customerId)
-        {
-            var order = new OrderEntity();
-
-            order.CreatTime = DateTime.Now;
-            order.Status = StatusEnum.New;
-            if (customerId != 0)
-            {
-                order.CustomerEntityId = customerId;
-            }
-            _context.Orders.Add(order);
-            _context.SaveChanges();
-
-            var orderFromDb = _context.Orders
-                .Where(o => o.CreatTime == order.CreatTime)
-                .Where(o => o.Status == order.Status)
-                .Where(o => o.CustomerEntityId == order.CustomerEntityId)
-                .FirstOrDefault();
-            return orderFromDb;
-        }
-        private void OrderDishes(int orderId, int dishId, int quantity = 1)
-        {
-            var orderDish = new OrderDishEntity { OrderEntityId = orderId, DishEntityId = dishId, Quantity = quantity };
-            _context.OrderDishEntities.Add(orderDish);
-            _context.SaveChanges();
-        }
-        private void AddressOrder(int orderId, int addressId)
-        {
-            var addressOrder = new AddressOrderEntity { OrderEntityId = orderId, AddressEntityId = addressId };
-            _context.AddressOrderEntities.Add(addressOrder);
-            _context.SaveChanges();
         }
 
         public string RemoveOrder(int id)
@@ -181,6 +161,68 @@ namespace Web_api_pizza.Services
                 message = "Ошибка при удалении заказа";
             }
             return message;
+        }
+
+        private OrderDTO GetListDishes(OrderEntity order)
+        {
+            var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(order);
+            var dishesList = new List<DishDTO>();
+            foreach (var d in order.Products)
+            {
+                var dishDTO = _menuService.GetOneDish(d.DishEntityId);
+                dishDTO.Quantity = d.Quantity;
+                dishesList.Add(dishDTO);
+            }
+            orderDTO.Dishes = dishesList;
+            return orderDTO;
+        }
+        private AddressDTO GetOrderAddress(int addressId)
+        {
+            var address = _addressService.GetDeliveryAddress(addressId);
+
+            return address;
+        }
+        // нужно решить проблему с повторением данных
+        private CustomerDTO GetCustomerOrder(int clientId)
+        {
+            var customerDTO = _customerService.GetOneCustomer(clientId);
+            customerDTO.Orders = null;
+            return customerDTO;
+        }
+
+        private OrderEntity CreateCustomerOrder(int customerId)
+        {
+            var order = new OrderEntity();
+
+            order.CreatTime = DateTime.Now;
+            order.Status = StatusEnum.New;
+            if (customerId != 0)
+            {
+                order.CustomerEntityId = customerId;
+            }
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+
+            var orderFromDb = _context.Orders
+                .Where(o => o.CreatTime == order.CreatTime)
+                .Where(o => o.Status == order.Status)
+                .Where(o => o.CustomerEntityId == order.CustomerEntityId)
+                .FirstOrDefault();
+            return orderFromDb;
+        }
+
+        private void CreateOrderDishes(int orderId, int dishId, int quantity = 1)
+        {
+            var orderDish = new OrderDishEntity { OrderEntityId = orderId, DishEntityId = dishId, Quantity = quantity };
+            _context.OrderDishEntities.Add(orderDish);
+            _context.SaveChanges();
+        }
+
+        private void CreateAddressOrder(int orderId, int addressId)
+        {
+            var addressOrder = new AddressOrderEntity { OrderEntityId = orderId, AddressEntityId = addressId };
+            _context.AddressOrderEntities.Add(addressOrder);
+            _context.SaveChanges();
         }
     }
 }
