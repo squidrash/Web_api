@@ -11,7 +11,7 @@ namespace CreateDb.Storage.DTO
         public int? CustomerEntityId { get; set; }
         //public CustomerDTO Customer { get; set; }
 
-        //public List<OrderDishDTO> Products { get; set; }
+        public List<DishDTO> Dishes { get; set; }
 
         public DateTime CreatTime { get; set; }
         public StatusEnum Status { get; set; }

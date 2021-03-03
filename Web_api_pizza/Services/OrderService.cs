@@ -68,7 +68,26 @@ namespace Web_api_pizza.Services
                 .ThenInclude(p => p.Dish)
                 .FirstOrDefault();
             var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(orderEntity);
+            // первоначальный вариант
+            //var dishesList = GetListDishes(orderEntity);
+            //orderDTO.Dishes = dishesList;
             return orderDTO;
+        }
+        private List<DishDTO> GetListDishes(OrderEntity order)
+        {
+            var dishesList = new List<DishDTO>();
+            foreach (var d in order.Products)
+            {
+                var dishEntity = _context.Dishes
+                    .FirstOrDefault(x => x.Id == d.DishEntityId);
+                var dishDTO = _mapper.Map<DishEntity, DishDTO>(dishEntity);
+
+                var quantityDish = _context.OrderDishEntities
+                    .FirstOrDefault(x => x.OrderEntityId == order.Id);
+                dishDTO.Quantity =
+                dishesList.Add(dishDTO);
+            }
+            return dishesList;
         }
 
         public string ChangeOrderStatus(int orderId, string orderStatus)

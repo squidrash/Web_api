@@ -80,32 +80,26 @@ namespace Web_api_pizza.Services
         }
         public string RegistrationCustomer(CustomerDTO customer)
         {
-            try
+            customer.Id = 0;
+            string message;
+            var checkCustomer = _context.Customers
+                .Where(c => c.Name == customer.Name)
+                .Where(c => c.LastName == customer.LastName)
+                .Where(c => c.Phone == customer.Phone)
+                .FirstOrDefault();
+            if (checkCustomer == null)
             {
-                string message;
-                var checkCustomer = _context.Customers
-                    .Where(c => c.Name == customer.Name)
-                    .Where(c => c.LastName == customer.LastName)
-                    .Where(c => c.Phone == customer.Phone)
-                    .FirstOrDefault();
-                if (checkCustomer == null)
-                {
-                    var customerEntity = _mapper.Map<CustomerDTO, CustomerEntity>(customer);
-                    _context.Customers.Add(customerEntity);
+                var customerEntity = _mapper.Map<CustomerDTO, CustomerEntity>(customer);
+                _context.Customers.Add(customerEntity);
 
-                    _context.SaveChanges();
-                    message = "Пользователь зарегистрирован";
-                }
-                else
-                {
-                    message = "Пользователь уже существует";
-                }
-                return message;
+                _context.SaveChanges();
+                message = "Пользователь зарегистрирован";
             }
-            catch
+            else
             {
-                return "Не удалось зарегистрировать пользователя";
+                message = "Пользователь уже существует";
             }
+            return message;
         }
         public void RegistrationManyCustomers(List<CustomerDTO> customers)
         {
@@ -157,34 +151,26 @@ namespace Web_api_pizza.Services
             }
             _context.SaveChanges();
         }
+        
         public string EditCustomer(CustomerDTO customer)
         {
-            try
+            string message;
+            var infoCustomer = _context.Customers
+            .FirstOrDefault(c => c.Id == customer.Id);
+            if (infoCustomer == null)
             {
-                string message;
-                var infoCustomer = _context.Customers
-                .FirstOrDefault(c => c.Id == customer.Id);
-                if(infoCustomer == null)
-                {
-                    message = "Пользователь не найден";
-                }
-                else
-                {
-                    infoCustomer.Name = customer.Name;
-                    infoCustomer.LastName = customer.LastName;
-                    infoCustomer.Phone = customer.Phone;
-                    infoCustomer.Discount = customer.Discount;
-                    _context.SaveChanges();
-                    message = "Пользователь изменен";
-                }
-                
-                return message;
+                message = null;
             }
-            catch
+            else
             {
-                return "Ошибка при изменении пользователя";
+                infoCustomer.Name = customer.Name;
+                infoCustomer.LastName = customer.LastName;
+                infoCustomer.Phone = customer.Phone;
+                infoCustomer.Discount = customer.Discount;
+                _context.SaveChanges();
+                message = "Пользователь изменен";
             }
-            
+            return message;
         }
 
     }

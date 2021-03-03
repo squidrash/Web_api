@@ -15,7 +15,7 @@ namespace CreateDb.Storage.Models
         public List<CustomerAddressEntity> Addresses { get; set; }
         [Required]
         public string Phone { get; set; }
-        public int Discount { get; set; }
+        public int? Discount { get; set; }
 
         public List<OrderEntity> Orders { get; set; }
     }

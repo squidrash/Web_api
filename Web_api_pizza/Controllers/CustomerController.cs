@@ -37,7 +37,7 @@ namespace Web_api_pizza.Controllers
             }
             return Ok(customer);
         }
-
+        // попозже разобраться как получать все в ДТО
         [HttpGet("getOneWithInfo/{id}")]
         public IActionResult GetOneWithInfo(int id)
         {
@@ -55,10 +55,11 @@ namespace Web_api_pizza.Controllers
         }
 
         [HttpPost("registration")]
-        public string RegistrationOneCustomer(CustomerDTO customer)
+        public IActionResult RegistrationOneCustomer(CustomerDTO customer)
         {
-            _customerService.RegistrationCustomer(customer);
-            return "Успешно";
+
+            var mess = _customerService.RegistrationCustomer(customer);
+            return Ok(mess);
         }
 
         [HttpPut("edit")]
