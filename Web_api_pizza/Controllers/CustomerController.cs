@@ -17,25 +17,41 @@ namespace Web_api_pizza.Controllers
         }
 
         [HttpGet("getAll")]
-        public List<CustomerDTO> GetAllCustomers()
+        public IActionResult GetAllCustomers()
         {
-
             var customers =_customerService.GetAllCustomers();
-            return customers;
+            return Ok(customers);
         }
 
-        [HttpGet("getOne")]
-        public CustomerDTO GetoneCustomers(int id)
+        [HttpGet("getOne/{id}")]
+        public IActionResult GetoneCustomers(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{id}\"");
+            }
             var customer = _customerService.GetOneCustomer(id);
-            return customer;
+            if(customer == null)
+            {
+                return NotFound($"Пользователь не нейден. Id - \"{id}\"");
+            }
+            return Ok(customer);
         }
 
-        [HttpGet("getOneWithInfo")]
-        public CustomerDTO GetOneWithInfo(int id)
+        [HttpGet("getOneWithInfo/{id}")]
+        public IActionResult GetOneWithInfo(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{id}\"");
+            }
             var customer = _customerService.GetCustomerWithAllInfo(id);
-            return customer;
+            if (customer == null)
+            {
+                return NotFound($"Пользователь не нейден. Id - \"{id}\"");
+            }
+            
+            return Ok(customer);
         }
 
         [HttpPost("registration")]
@@ -52,7 +68,7 @@ namespace Web_api_pizza.Controllers
             return message;
         }
 
-        [HttpDelete("delete")]
+        [HttpDelete("delete/{id}")]
         public string DeleteCustomer(int id)
         {
             _customerService.DeleteCustomer(id);

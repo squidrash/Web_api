@@ -64,6 +64,18 @@ namespace Web_api_pizza.Services
                     .ThenInclude(a => a.Address)
                     .FirstOrDefault(c => c.Id == id);
                 var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
+            //только для проверки потом удалить
+            Console.WriteLine($"{customerEntity.Name} {customerEntity.LastName}");
+            foreach(var o in customerEntity.Orders)
+            {
+                Console.WriteLine(o.Id);
+                Console.WriteLine(o.CreatTime);
+                Console.WriteLine(o.Status);
+                foreach(var p in o.Products)
+                {
+                    Console.WriteLine($"{p.Dish.ProductName} - {p.Dish.Price}");
+                }
+            }
                 return customerDTO;
         }
         public string RegistrationCustomer(CustomerDTO customer)

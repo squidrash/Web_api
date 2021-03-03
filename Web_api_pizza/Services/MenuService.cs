@@ -12,9 +12,9 @@ namespace Web_api_pizza.Services
     {
         public List<DishDTO> GetFullMenu();
         public DishDTO GetOneDish(int id);
-        public void RemoveFromMenu(int id);
-        public void EditMenu(DishDTO dish);
-        public void AddToMenu(DishDTO dishDTO);
+        public string RemoveFromMenu(int id);
+        public string EditMenu(DishDTO dish);
+        public string AddToMenu(DishDTO dishDTO);
         //добавить сразу несколько
         //проверить нужен ли он
         //public void AddToMenu(List<DishDTO> dishesDTOs);
@@ -43,32 +43,62 @@ namespace Web_api_pizza.Services
             var dishDto = _mapper.Map<DishEntity, DishDTO>(dishEntity);
             return dishDto;
         }
-        public void RemoveFromMenu(int id)
+        public string RemoveFromMenu(int id)
         {
             var removeDish = _context.Dishes.FirstOrDefault(m => m.Id == id);
-
+            string message;
+            if(removeDish == null)
+            {
+                message = null;
+                return message;
+            }
             _context.Dishes.Remove(removeDish);
             _context.SaveChanges();
+            message = "Блюдо удалено";
+            return message;
+
         }
-        public void EditMenu(DishDTO dish)
+        public string EditMenu(DishDTO dish)
         {
             var editDish = _context.Dishes.FirstOrDefault(d => d.Id == dish.Id);
 
+            string message;
+            if (editDish == null)
+            {
+                return message = null;
+            }
+            if (editDish.ProductName == dish.ProductName
+            && editDish.Price == dish.Price)
+            {
+                message = "что изменять то?";
+                return message;
+            }
             editDish.ProductName = dish.ProductName;
             editDish.Price = dish.Price;
 
             _context.SaveChanges();
+            message = "Изменено";
+            return message;
         }
-        public void AddToMenu(DishDTO dish)
+        public string AddToMenu(DishDTO dish)
         {
+            dish.Id = 0;
             var checkDish = _context.Dishes
                 .Where(d => d.ProductName == dish.ProductName)
                 .FirstOrDefault();
+            string message;
             if (checkDish == null)
             {
                 var dishesEntity = _mapper.Map<DishDTO, DishEntity>(dish);
                 _context.Dishes.Add(dishesEntity);
                 _context.SaveChanges();
+                message = "Блюдо добавлено";
+                return message;
+            }
+            else
+            {
+                message = "Блюдо уже есть в меню";
+                return message;
             }
         }
         public void AddToMenu(List<DishDTO> dishesDTOs)

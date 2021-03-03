@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Web_api_pizza.Storage.Enums;
 
 namespace CreateDb.Storage.DTO
@@ -8,14 +9,14 @@ namespace CreateDb.Storage.DTO
         public int Id { get; set; }
 
         public int? CustomerEntityId { get; set; }
-        //public CustomerEntity Customer { get; set; }
+        //public CustomerDTO Customer { get; set; }
 
-        //public List<OrderMenuEntity> Products { get; set; }
+        //public List<OrderDishDTO> Products { get; set; }
 
         public DateTime CreatTime { get; set; }
         public StatusEnum Status { get; set; }
 
-        //public AddressOrderEntity AddressOrder { get; set; }
+        //public AddressOrderDTO AddressOrder { get; set; }
     }
     
 

@@ -7,14 +7,15 @@ namespace CreateDb.Storage.DTO
     public class CustomerDTO
     {
         public int Id { get; set; }
-        [Required]
+        [Required(ErrorMessage ="")]
         public string Name { get; set; }
-        [Required]
+        [Required(ErrorMessage = "")]
         public string LastName { get; set; }
 
         // место для списка адресов
 
         [Required]
+        [Phone]
         public string Phone { get; set; }
         public int Discount { get; set; } 
 

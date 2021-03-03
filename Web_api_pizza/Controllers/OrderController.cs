@@ -20,10 +20,17 @@ namespace Web_api_pizza.Controllers
 
         //работает
         [HttpGet("all")]
-        public List<OrderDTO> GetAllOrders()
+        public IActionResult GetAllOrders()
         {
             var orders = _orderService.GetAllOrders();
-            return orders;
+            if (orders == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                return Ok(orders);
+            }
         }
 
         //работает

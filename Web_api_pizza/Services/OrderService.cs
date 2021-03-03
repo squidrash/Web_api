@@ -93,7 +93,8 @@ namespace Web_api_pizza.Services
                 var order = CustomerOrder(customerId);
                 foreach (var d in dishes)
                 {
-                    OrderDishes(order.Id, d.Id, d.Quantity);
+                    OrderDishes(order.Id, (int)d.Id, d.Quantity);
+
                 }
                 if (addressId != 0)
                 {

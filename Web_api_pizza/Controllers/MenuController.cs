@@ -20,48 +20,101 @@ namespace Web_api_pizza.Controllers
             _menuService = menuService;
 
         }
-        // GET: api/menu
+        //работает
+        //протестирован
         [HttpGet("fullMenu")]
-        //[HttpGet]
-        //[Route("fullMenu")]
-        public ActionResult<List<DishDTO>> GetMenu()
+        public IActionResult GetMenu()
         {
             var menu = _menuService.GetFullMenu();
-            return menu;
+            return Ok(menu);
         }
-        [HttpGet("oneDish")]
-        //[HttpGet]
-        //[Route("oneDish")]
-        public DishDTO GetDish(int id)
-        {
-            var dish = _menuService.GetOneDish(id);
-            return dish;
-        }
-
-        // POST api/menu/
-        //Работает
-        [HttpPost("add")]
-        public string AddToMenu(DishDTO dishes)
-        {
-            _menuService.AddToMenu(dishes);
-            return "Успешно";
-        }
-
-        // PUT api/menu/
         //работает
-        [HttpPut("edit")]
-        public void Edit( DishDTO dish)
+        //протестирован
+        [HttpGet("onedish/{id}")]
+        public IActionResult GetDish(int id)
         {
-            _menuService.EditMenu(dish);
+            if(id <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{id}\"");
+            }
+            var dish = _menuService.GetOneDish(id);
+            if (dish == null)
+            {
+                return NotFound($"Блюдо не найдено - \"{id}\"");
+            }
+                return Ok(dish);
+        }
+
+        //Работает
+        //протестирован
+        [HttpPost("add")]
+        public IActionResult AddToMenu(DishDTO dishes)
+        {
+            //if (dishes.Price <= 0)
+            //{
+            //    ModelState.AddModelError("Price", $"Недопустимое значение цены - {dishes.Price}");
+            //}
+            if (dishes.Price <= 0)
+            {
+                return BadRequest($"Недопустимое значение цены - \"{dishes.Price}\"");
+            }
+
+
+            //if (dishes.ProductName == null)
+            //{
+            //    ModelState.AddModelError("ProductName", "Укажите блюдо");
+
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
+            var dishMess = _menuService.AddToMenu(dishes);
+            return Ok(dishMess);
+        }
+
+        
+        //работает
+        //протестирован
+        [HttpPut("edit")]
+        public IActionResult Edit( DishDTO dish)
+        {
+            if(dish.Id <= 0)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{dish.Id}\"");
+            }
+            if(dish.Price <= 0)
+            {
+                ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+                
+            var mess = _menuService.EditMenu(dish);
+            if (mess == null)
+            {
+                return NotFound($"Блюдо не найдено Id - \"{dish.Id}\"");
+            }
+            return Ok(mess);
         }
 
         // DELETE api/menu/
         //Работает
-        [HttpDelete("delete")]
-        public string Delete(int id)
+        [HttpDelete("delete/{id}")]
+        public IActionResult Delete(int id)
         {
-            _menuService.RemoveFromMenu(id);
-            return "Успешно";
+            if (id <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{id}\"");
+            }
+            var mess = _menuService.RemoveFromMenu(id);
+            if(mess == null)
+            {
+                return NotFound($"Блюдо не найдено Id - \"{id}\"");
+            }
+            return Ok(mess);
+            
         }
     }
 }
