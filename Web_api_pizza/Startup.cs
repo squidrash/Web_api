@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using CreateDb.Storage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -14,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Web_api_pizza.Services;
+using Web_api_pizza.Storage.DTO;
 
 namespace Web_api_pizza
 {
@@ -31,7 +31,12 @@ namespace Web_api_pizza
         {
             string pgConnection = Configuration.GetConnectionString("PgConnection");
             services.AddDbContext<PizzaDbContext>(options => options.UseNpgsql(pgConnection));
-            services.AddControllers();
+            services.AddControllers()
+                .AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                    options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                });
 
             var mapperConfig = new MapperConfiguration(mc =>
             {

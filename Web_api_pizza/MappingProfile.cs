@@ -1,7 +1,7 @@
 ﻿using System;
 using AutoMapper;
-using CreateDb.Storage.DTO;
-using CreateDb.Storage.Models;
+using Web_api_pizza.Storage.DTO;
+using Web_api_pizza.Storage.Models;
 
 namespace Web_api_pizza
 {
@@ -11,6 +11,9 @@ namespace Web_api_pizza
         {
             CreateMap<CustomerEntity, CustomerDTO>();
             CreateMap<CustomerDTO, CustomerEntity>();
+
+            CreateMap<CustomerEntity, PersonDTO>();
+            CreateMap<PersonDTO, CustomerEntity>();
 
             CreateMap<OrderEntity, OrderDTO>();
             CreateMap<OrderDTO, OrderEntity>();

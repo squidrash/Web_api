@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
-using CreateDb.Storage;
-using CreateDb.Storage.DTO;
-using CreateDb.Storage.Models;
+using Web_api_pizza.Storage.DTO;
+using Web_api_pizza.Storage.Models;
 
 namespace Web_api_pizza.Services
 {

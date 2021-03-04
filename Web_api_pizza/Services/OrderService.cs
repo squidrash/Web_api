@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
-using CreateDb.Storage;
-using CreateDb.Storage.DTO;
-using CreateDb.Storage.Models;
 using Microsoft.EntityFrameworkCore;
+using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
+using Web_api_pizza.Storage.Models;
 
 namespace Web_api_pizza.Services
 {
@@ -44,6 +43,36 @@ namespace Web_api_pizza.Services
             {"Отменен", StatusEnum.Cancelled}
         };
 
+        //public List<OrderDTO> GetAllOrders(int customerId = 0)
+        //{
+        //    List<OrderEntity> ordersEntity;
+
+        //    if (customerId != 0)
+        //    {
+        //        ordersEntity = _context.Orders
+        //            .Include(o => o.Customer)
+        //            .Where(o => o.CustomerEntityId == customerId)
+        //            .Include(o => o.Products)
+        //            .ThenInclude(p => p.Dish)
+        //            .OrderByDescending(o => o.CreatTime)
+        //            .ToList();
+        //    }
+        //    else
+        //    {
+        //        ordersEntity = _context.Orders
+        //            .Include(o => o.Products)
+        //            .OrderByDescending(o=> o.CreatTime)
+        //            .ToList();
+        //    }
+        //    //var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
+        //    var ordersDTO = new List<OrderDTO>();
+        //    foreach (var o in ordersEntity)
+        //    {
+        //        var order = GetListDishes(o);
+        //        ordersDTO.Add(order);
+        //    }
+        //    return ordersDTO;
+        //}
         public List<OrderDTO> GetAllOrders(int customerId = 0)
         {
             List<OrderEntity> ordersEntity;
@@ -51,38 +80,35 @@ namespace Web_api_pizza.Services
             if (customerId != 0)
             {
                 ordersEntity = _context.Orders
-                    .Include(o => o.Customer)
                     .Where(o => o.CustomerEntityId == customerId)
-                    .Include(o => o.Products)
-                    .ThenInclude(p => p.Dish)
                     .OrderByDescending(o => o.CreatTime)
                     .ToList();
+                foreach( var o in ordersEntity)
+                {
+                    o.CustomerEntityId = 0;
+                }
             }
             else
             {
                 ordersEntity = _context.Orders
-                    .Include(o => o.Customer)
-                    .Include(o => o.Products)
-                    .ThenInclude(p => p.Dish)
-                    .OrderByDescending(o=> o.CreatTime)
+                    .OrderByDescending(o => o.CreatTime)
                     .ToList();
             }
             //var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
             var ordersDTO = new List<OrderDTO>();
             foreach (var o in ordersEntity)
             {
-                var order = GetListDishes(o);
+                var order = GetOneOrder(o.Id);
                 ordersDTO.Add(order);
             }
             return ordersDTO;
         }
 
-        // нужен литакой громоздкий метод???
+        // нужен ли такой громоздкий метод???
         public OrderDTO GetOneOrder(int id)
         {
             var orderEntity = _context.Orders.
                 Where(o => o.Id == id)
-                //.Include(o => o.Customer)
                 .Include(o => o.Products)
                 .Include(o => o.AddressOrder)
                 .FirstOrDefault();
@@ -182,12 +208,11 @@ namespace Web_api_pizza.Services
 
             return address;
         }
-        // нужно решить проблему с повторением данных
-        private CustomerDTO GetCustomerOrder(int clientId)
+        
+        private PersonDTO GetCustomerOrder(int clientId)
         {
-            var customerDTO = _customerService.GetOneCustomer(clientId);
-            customerDTO.Orders = null;
-            return customerDTO;
+            var personDTO = _customerService.GetOneCustomer(clientId);
+            return personDTO;
         }
 
         private OrderEntity CreateCustomerOrder(int customerId)

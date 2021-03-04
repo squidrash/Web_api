@@ -1,8 +1,8 @@
 ﻿using System;
-using CreateDb.Storage.Models;
 using Microsoft.EntityFrameworkCore;
+using Web_api_pizza.Storage.Models;
 
-namespace CreateDb.Storage
+namespace Web_api_pizza.Storage.DTO
 {
     public class PizzaDbContext : DbContext
     {

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CreateDb.Storage.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Web_api_pizza.Services;
+using Web_api_pizza.Storage.DTO;
 
 namespace Web_api_pizza.Controllers
 {
@@ -18,33 +18,65 @@ namespace Web_api_pizza.Controllers
             _addressService = addressService;
         }
 
-        [HttpGet("Get")]
-        public AddressDTO GetAddress(int id)
+        [HttpGet("{id}")]
+        public IActionResult GetAddress(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{id}\"");
+            }
             var address = _addressService.GetDeliveryAddress(id);
-            return address;
+            if (address == null)
+            {
+                return NotFound($"Адрес не найден - \"{id}\"");
+            }
+            return Ok(address);
         }
 
         
         [HttpPost("Create")]
-        public string CreateAddress(AddressDTO address, int customerId = 0)
+        public IActionResult CreateAddress(AddressDTO address, int customerId = 0)
         {
-            _addressService.CreateDeliveryAddress(address, customerId);
-            return "Успешно добавлен адрес";
+            if (customerId < 0)
+            {
+                ModelState.AddModelError("customerId", $"Недопустимое значение Id - \"{customerId}\"");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var message = _addressService.CreateDeliveryAddress(address, customerId);
+            return Ok(message);
         }
 
         [HttpPut("Edit")]
-        public string EditAddress(AddressDTO address)
+        public IActionResult EditAddress(AddressDTO address)
         {
-            _addressService.EditDeliveryAddress(address);
-            return "Адрес изменен";
+            if(address.Id <=0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{address.Id}\"");
+            }
+            var message = _addressService.EditDeliveryAddress(address);
+            if(message == null)
+            {
+                return NotFound($"Адрес не найден Id - \"{address.Id}\"");
+            }
+            return Ok(message);
         }
 
-        [HttpDelete("Delete")]
-        public string RemoveAddress(int id)
+        [HttpDelete("Delete/{id}")]
+        public IActionResult RemoveAddress(int id)
         {
-            _addressService.RemoveDeliveryAddress(id);
-            return "Адрес удален";
+            if (id <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id - \"{id}\"");
+            }
+            var message =  _addressService.RemoveDeliveryAddress(id);
+            if (message == null)
+            {
+                return NotFound($"Адрес найден Id - \"{id}\"");
+            }
+            return Ok(message);
         }
     }
 }

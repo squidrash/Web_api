@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace CreateDb.Storage.Models
+namespace Web_api_pizza.Storage.Models
 {
     public class OrderDishEntity
     {

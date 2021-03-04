@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Web_api_pizza.Storage.Enums;
 
-namespace CreateDb.Storage.Models
+namespace Web_api_pizza.Storage.Models
 {
     public class OrderEntity
     {

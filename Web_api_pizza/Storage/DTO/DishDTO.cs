@@ -1,8 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using CreateDb.Storage.Models;
 
-namespace CreateDb.Storage.DTO
+namespace Web_api_pizza.Storage.DTO
 {
     public class DishDTO
     {

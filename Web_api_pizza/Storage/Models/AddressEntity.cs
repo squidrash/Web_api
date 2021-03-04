@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace CreateDb.Storage.Models
+namespace Web_api_pizza.Storage.Models
+    
 {
     // нужно ли добавить ссылку на заказ без пользователя?
     public class AddressEntity

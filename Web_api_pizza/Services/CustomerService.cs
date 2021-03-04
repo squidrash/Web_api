@@ -2,17 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
-using CreateDb.Storage;
-using CreateDb.Storage.DTO;
-using CreateDb.Storage.Models;
 using Microsoft.EntityFrameworkCore;
+using Web_api_pizza.Storage.DTO;
+using Web_api_pizza.Storage.Models;
 
 namespace Web_api_pizza.Services
 {
     public interface ICustomerService
     {
         public List<CustomerDTO> GetAllCustomers();
-        public CustomerDTO GetOneCustomer(int id);
+        public PersonDTO GetOneCustomer(int id);
 
         //получаем клиента со всеми данныйми(заказы, адреса)
         public CustomerDTO GetCustomerWithAllInfo(int id);
@@ -47,11 +46,11 @@ namespace Web_api_pizza.Services
             var customersDTO = _mapper.Map<List<CustomerEntity>, List<CustomerDTO>> (customersEntity);
             return customersDTO;
         }
-        public CustomerDTO GetOneCustomer(int id)
+        public PersonDTO GetOneCustomer(int id)
         {
             var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == id);
-            var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
-            return customerDTO;
+            var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
+            return personDTO;
         }
         public CustomerDTO GetCustomerWithAllInfo(int id)
         {
