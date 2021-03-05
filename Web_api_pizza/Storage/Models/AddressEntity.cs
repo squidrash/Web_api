@@ -20,6 +20,6 @@ namespace Web_api_pizza.Storage.Models
 
         public List<CustomerAddressEntity> Customers { get; set; }
 
-        public AddressOrderEntity AddressOrder { get; set; }
+        public List<AddressOrderEntity> AddressOrder { get; set; }
     }
 }

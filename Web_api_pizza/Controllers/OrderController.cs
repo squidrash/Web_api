@@ -23,32 +23,50 @@ namespace Web_api_pizza.Controllers
         public IActionResult GetAllOrders()
         {
             var orders = _orderService.GetAllOrders();
+            return Ok(orders);
+        }
+
+        //работает
+        [HttpGet("customer/{id}")]
+        public IActionResult CustomerOrders(int id)
+        {
+            if(id <= 0)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{id}\"");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var orders = _orderService.GetAllOrders(id);
             if (orders == null)
             {
-                return NotFound();
+                return NotFound($"Пользователь не найден Id - \"{id}\"");
             }
-            else
+            return Ok(orders);
+        }
+        //работает
+        [HttpGet("specific/{id}")]
+        public IActionResult GetOneOrder(int id)
+        {
+            if (id <= 0)
             {
-                return Ok(orders);
+                ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{id}\"");
             }
-        }
-
-        //работает
-        [HttpGet("customer")]
-        public List<OrderDTO> CustomerOrders(int id)
-        {
-            var orders = _orderService.GetAllOrders(id);
-            return orders;
-        }
-        //работает
-        [HttpGet("specific")]
-        public OrderDTO GetOneOrder(int id)
-        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var order = _orderService.GetOneOrder(id);
-            return order;
+            if (order == null)
+            {
+                return NotFound($"Заказ не найден Id - \"{id}\"");
+            }
+            return Ok(order);
         }
 
         //работает
+        //проработать алгоритм изменения статуса
         [HttpPut("changeStatus")]
         public string ChangeStatus(int orderId, string orderStatus)
         {

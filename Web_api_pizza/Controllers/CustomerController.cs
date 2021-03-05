@@ -57,23 +57,47 @@ namespace Web_api_pizza.Controllers
         [HttpPost("registration")]
         public IActionResult RegistrationOneCustomer(CustomerDTO customer)
         {
-
             var mess = _customerService.RegistrationCustomer(customer);
             return Ok(mess);
         }
 
         [HttpPut("edit")]
-        public string EditCustomer(CustomerDTO customer)
+        public IActionResult EditCustomer(CustomerDTO customer)
         {
-             var  message =_customerService.EditCustomer(customer);
-            return message;
+            if(customer.Id <= 0)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{customer.Id}\"");
+            }
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var  message =_customerService.EditCustomer(customer);
+            if(message == null)
+            {
+                return NotFound($"Пользователь не найден Id - \"{customer.Id}\"");
+            }
+            return Ok(message);
         }
 
         [HttpDelete("delete/{id}")]
-        public string DeleteCustomer(int id)
+        public IActionResult DeleteCustomer(int id)
         {
-            _customerService.DeleteCustomer(id);
-            return "Пользователь удален";
+            if(id <= 0)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{id}\"");
+            }
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var message = _customerService.DeleteCustomer(id);
+            if(message == null)
+            {
+                return NotFound("Пользователь не найден");
+            }
+            return Ok(message);
         }
     }
 }

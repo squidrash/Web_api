@@ -32,10 +32,15 @@ namespace Web_api_pizza.Services
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        public CustomerService(PizzaDbContext context, IMapper mapper)
+        private readonly IOrderService _orderService;
+        private readonly IAddressService _addressService;
+        public CustomerService(PizzaDbContext context, IMapper mapper,
+            IOrderService orderService, IAddressService addressService)
         {
             _context = context;
             _mapper = mapper;
+            _orderService = orderService;
+            _addressService = addressService;
         }
         public List<CustomerDTO> GetAllCustomers()
         {
@@ -57,25 +62,26 @@ namespace Web_api_pizza.Services
                 var customerEntity = _context.Customers
                     .Where(c => c.Id == id)
                     .Include(c => c.Orders)
-                    .ThenInclude(o => o.Products)
-                    .ThenInclude(p => p.Dish)
                     .Include(u => u.Addresses)
-                    .ThenInclude(a => a.Address)
-                    .FirstOrDefault(c => c.Id == id);
+                    .FirstOrDefault();
                 var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
-            //только для проверки потом удалить
-            Console.WriteLine($"{customerEntity.Name} {customerEntity.LastName}");
-            foreach(var o in customerEntity.Orders)
+            
+            var listOrders = new List<OrderDTO>();
+            foreach (var o in customerEntity.Orders)
             {
-                Console.WriteLine(o.Id);
-                Console.WriteLine(o.CreatTime);
-                Console.WriteLine(o.Status);
-                foreach(var p in o.Products)
-                {
-                    Console.WriteLine($"{p.Dish.ProductName} - {p.Dish.Price}");
-                }
+                var order = _orderService.GetOneOrder(o.Id);
+                order.Client = null;
+                listOrders.Add(order);
             }
-                return customerDTO;
+            var listAddresses = new List<AddressDTO>();
+            foreach (var a in customerEntity.Addresses)
+            {
+                var address = _addressService.GetDeliveryAddress(a.AddressEntityId);
+                listAddresses.Add(address);
+            }
+            customerDTO.Orders = listOrders;
+            customerDTO.Address = listAddresses;
+            return customerDTO;
         }
         public string RegistrationCustomer(CustomerDTO customer)
         {
@@ -119,27 +125,19 @@ namespace Web_api_pizza.Services
         }
         public string DeleteCustomer(int id)
         {
-            try
-            {
-                string message;
-                var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == id);
+            string message;
+            var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == id);
                 
-                if(removableCustomer == null)
-                {
-                    message = "Пользователь не найден";
-                }
-                else
-                {
-                    _context.Customers.Remove(removableCustomer);
-                    _context.SaveChanges();
-                    message = "Пользователь удален";
-                }
+            if(removableCustomer == null)
+            {
+                message = null;
                 return message;
             }
-            catch
-            {
-                return "Ошибка при удалении пользователя";
-            }
+            
+            _context.Customers.Remove(removableCustomer);
+            _context.SaveChanges();
+            message = "Пользователь удален";
+            return message;
         }
         public void DeleteManyCustomers(int[] customersId)
         {
@@ -159,16 +157,23 @@ namespace Web_api_pizza.Services
             if (infoCustomer == null)
             {
                 message = null;
+                return message;
             }
-            else
+            if(infoCustomer.Name == customer.Name &&
+            infoCustomer.LastName == customer.LastName &&
+            infoCustomer.Phone == customer.Phone &&
+            infoCustomer.Discount == customer.Discount)
             {
-                infoCustomer.Name = customer.Name;
-                infoCustomer.LastName = customer.LastName;
-                infoCustomer.Phone = customer.Phone;
-                infoCustomer.Discount = customer.Discount;
-                _context.SaveChanges();
-                message = "Пользователь изменен";
+                message = "что изменять то?";
+                return message;
             }
+            
+            infoCustomer.Name = customer.Name;
+            infoCustomer.LastName = customer.LastName;
+            infoCustomer.Phone = customer.Phone;
+            infoCustomer.Discount = customer.Discount;
+            _context.SaveChanges();
+            message = "Пользователь изменен";
             return message;
         }
 

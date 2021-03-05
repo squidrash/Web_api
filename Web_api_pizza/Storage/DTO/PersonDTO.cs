@@ -10,8 +10,8 @@ namespace Web_api_pizza.Storage.DTO
         public string Name { get; set; }
         [Required(ErrorMessage = "Укажите фамилию пользователя")]
         public string LastName { get; set; }
-        [Required]
-        [Phone(ErrorMessage = "Укажите телефон пользователя")]
+        [Required(ErrorMessage = "Укажите телефон пользователя")]
+        [Phone]
         public string Phone { get; set; }
         public int? Discount { get; set; }
     }

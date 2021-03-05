@@ -56,18 +56,19 @@ namespace Web_api_pizza.Controllers
             //}
             if (dishes.Price <= 0)
             {
-                return BadRequest($"Недопустимое значение цены - \"{dishes.Price}\"");
+                ModelState.AddModelError("Id",$"Недопустимое значение цены - \"{dishes.Price}\"");
             }
 
 
-            //if (dishes.ProductName == null)
-            //{
-            //    ModelState.AddModelError("ProductName", "Укажите блюдо");
+            if (dishes.ProductName == null)
+            {
+                ModelState.AddModelError("ProductName", "Укажите блюдо");
+            }
 
-            //if (!ModelState.IsValid)
-            //{
-            //    return BadRequest(ModelState);
-            //}
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var dishMess = _menuService.AddToMenu(dishes);
             return Ok(dishMess);
         }

@@ -10,7 +10,7 @@ namespace Web_api_pizza.Storage.DTO
         //место для списка заказов
         public List<OrderDTO> Orders { get; set; }
         // место для списка адресов
-        public List<AddressDTO> Addresses { get; set; }
+        public List<AddressDTO> Address { get; set; }
 
     }
 }

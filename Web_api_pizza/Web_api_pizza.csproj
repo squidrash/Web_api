@@ -20,5 +20,6 @@
   <ItemGroup>
     <Folder Include="Services\" />
     <Folder Include="Storage\Enums\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 </Project>

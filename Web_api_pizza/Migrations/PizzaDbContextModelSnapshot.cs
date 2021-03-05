@@ -19,7 +19,7 @@ namespace Web_api_pizza.Migrations
                 .HasAnnotation("ProductVersion", "3.1.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            modelBuilder.Entity("CreateDb.Storage.Models.AddressEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.AddressEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -49,7 +49,7 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("Addresses");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.AddressOrderEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.AddressOrderEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -64,8 +64,7 @@ namespace Web_api_pizza.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddressEntityId")
-                        .IsUnique();
+                    b.HasIndex("AddressEntityId");
 
                     b.HasIndex("OrderEntityId")
                         .IsUnique();
@@ -73,7 +72,7 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("AddressOrderEntities");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.CustomerAddressEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.CustomerAddressEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -95,14 +94,14 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("CustomerAddressEntities");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.CustomerEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.CustomerEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<int>("Discount")
+                    b.Property<int?>("Discount")
                         .HasColumnType("integer");
 
                     b.Property<string>("LastName")
@@ -122,7 +121,7 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("Customers");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.DishEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.DishEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -141,7 +140,7 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("Dishes");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.OrderDishEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.OrderDishEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -166,7 +165,7 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("OrderDishEntities");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.OrderEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.OrderEntity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -189,54 +188,54 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.AddressOrderEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.AddressOrderEntity", b =>
                 {
-                    b.HasOne("CreateDb.Storage.Models.AddressEntity", "Address")
-                        .WithOne("AddressOrder")
-                        .HasForeignKey("CreateDb.Storage.Models.AddressOrderEntity", "AddressEntityId")
+                    b.HasOne("Web_api_pizza.Storage.Models.AddressEntity", "Address")
+                        .WithMany("AddressOrder")
+                        .HasForeignKey("AddressEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CreateDb.Storage.Models.OrderEntity", "Order")
+                    b.HasOne("Web_api_pizza.Storage.Models.OrderEntity", "Order")
                         .WithOne("AddressOrder")
-                        .HasForeignKey("CreateDb.Storage.Models.AddressOrderEntity", "OrderEntityId")
+                        .HasForeignKey("Web_api_pizza.Storage.Models.AddressOrderEntity", "OrderEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.CustomerAddressEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.CustomerAddressEntity", b =>
                 {
-                    b.HasOne("CreateDb.Storage.Models.AddressEntity", "Address")
+                    b.HasOne("Web_api_pizza.Storage.Models.AddressEntity", "Address")
                         .WithMany("Customers")
                         .HasForeignKey("AddressEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CreateDb.Storage.Models.CustomerEntity", "Customer")
+                    b.HasOne("Web_api_pizza.Storage.Models.CustomerEntity", "Customer")
                         .WithMany("Addresses")
                         .HasForeignKey("CustomerEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.OrderDishEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.OrderDishEntity", b =>
                 {
-                    b.HasOne("CreateDb.Storage.Models.DishEntity", "Dish")
+                    b.HasOne("Web_api_pizza.Storage.Models.DishEntity", "Dish")
                         .WithMany("Orders")
                         .HasForeignKey("DishEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CreateDb.Storage.Models.OrderEntity", "Order")
+                    b.HasOne("Web_api_pizza.Storage.Models.OrderEntity", "Order")
                         .WithMany("Products")
                         .HasForeignKey("OrderEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CreateDb.Storage.Models.OrderEntity", b =>
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.OrderEntity", b =>
                 {
-                    b.HasOne("CreateDb.Storage.Models.CustomerEntity", "Customer")
+                    b.HasOne("Web_api_pizza.Storage.Models.CustomerEntity", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerEntityId");
                 });

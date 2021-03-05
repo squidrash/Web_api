@@ -23,20 +23,21 @@ namespace Web_api_pizza.Services
         private readonly PizzaDbContext _context;
         private readonly IMenuService _menuService;
         private readonly IAddressService _addressService;
-        private readonly ICustomerService _customerService;
-        public OrderService(IMapper mapper, PizzaDbContext context, ICustomerService customerService,
+        //private readonly ICustomerService _customerService;
+        public OrderService(IMapper mapper, PizzaDbContext context,
             IMenuService menuService, IAddressService addressService)
         {
             _mapper = mapper;
             _context = context;
             _menuService = menuService;
             _addressService = addressService;
-            _customerService = customerService;
+            //_customerService = customerService;
         }
 
         readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
         {
             {"Новый", StatusEnum.New },
+            {"Подтвержден", StatusEnum.Confirmed },
             {"Готовится", StatusEnum.Preparing },
             {"В пути", StatusEnum.OnTheWay},
             {"Доставлен", StatusEnum.Delivered},
@@ -145,24 +146,18 @@ namespace Web_api_pizza.Services
 
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
-            try
+            var order = CreateCustomerOrder(customerId);
+            
+            foreach (var d in dishes)
             {
-                var order = CreateCustomerOrder(customerId);
-                foreach (var d in dishes)
-                {
-                    CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
+                CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
 
-                }
-                if (addressId != 0)
-                {
-                    CreateAddressOrder(order.Id, addressId);
-                }
-                return "Заказ создан";
             }
-            catch
+            if (addressId != 0)
             {
-                return "Неверные данные заказа";
+                CreateAddressOrder(order.Id, addressId);
             }
+            return "Заказ создан";
         }
 
         public string RemoveOrder(int id)
@@ -211,7 +206,10 @@ namespace Web_api_pizza.Services
         
         private PersonDTO GetCustomerOrder(int clientId)
         {
-            var personDTO = _customerService.GetOneCustomer(clientId);
+            //var personDTO = _customerService.GetOneCustomer(clientId);
+            //return personDTO;
+            var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == clientId);
+            var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
             return personDTO;
         }
 
