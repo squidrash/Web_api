@@ -34,7 +34,7 @@ namespace Web_api_pizza.Services
             //_customerService = customerService;
         }
 
-        readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
+        private readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
         {
             {"Новый", StatusEnum.New },
             {"Подтвержден", StatusEnum.Confirmed },
@@ -42,6 +42,19 @@ namespace Web_api_pizza.Services
             {"В пути", StatusEnum.OnTheWay},
             {"Доставлен", StatusEnum.Delivered},
             {"Отменен", StatusEnum.Cancelled}
+        };
+        private readonly Dictionary<StatusEnum,IEnumerable<StatusEnum>> _statusChangeRule = new Dictionary<StatusEnum, IEnumerable<StatusEnum>>
+        {
+            { StatusEnum.New, new[]{ StatusEnum.Confirmed, StatusEnum.Cancelled } },
+            { StatusEnum.Confirmed, new[]{ StatusEnum.Preparing } },
+            { StatusEnum.Preparing, new[]{ StatusEnum.OnTheWay } },
+            { StatusEnum.OnTheWay, new[]{ StatusEnum.Delivered } },
+            { StatusEnum.Delivered, new StatusEnum[] { } },
+            { StatusEnum.Cancelled, new StatusEnum[] { } },
+        };
+        private readonly List<string> StatusList = new List<string>()
+        {
+            "Новый","Подтвержден","Готовится","В пути","Доставлен","Отменен"
         };
 
         //public List<OrderDTO> GetAllOrders(int customerId = 0)
@@ -131,57 +144,102 @@ namespace Web_api_pizza.Services
 
         public string ChangeOrderStatus(int orderId, string orderStatus)
         {
-            try
+            var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
+            string message;
+            if(order == null)
             {
-                var changeStatus = _context.Orders.FirstOrDefault(o => o.Id == orderId);
-                changeStatus.Status = OrderStatusesDic[orderStatus];
+                message = null;
+                return message;
+            }
+            if(!StatusList.Contains(orderStatus))
+            {
+                message = "BadStatus";
+                return message;
+            }
+            var newStatus = OrderStatusesDic[orderStatus];
+            var alowedStatus = _statusChangeRule[order.Status];
+            if (alowedStatus.Contains(newStatus))
+            {
+                order.Status = newStatus;
                 _context.SaveChanges();
-                return "Статус изменен";
+                message = "Статус изменен";
+                return message;
             }
-            catch (Exception e)
+            else
             {
-                return $"Неудалось изменить статус {e.Message}";
+                message = "BadStatus";
+                return message;
             }
+            //var checkStatus = CheckStatus(changeStatus.Status, orderStatus);
+            //if(checkStatus)
+            //{
+            //    changeStatus.Status = OrderStatusesDic[orderStatus];
+            //    _context.SaveChanges();
+            //    message = "Статус изменен";
+            //    return message;
+            //}
+            //else
+            //{
+            //    message = "BadStatus";
+            //    return message;
+            //}
         }
 
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
+            string message = null;
             var order = CreateCustomerOrder(customerId);
-            
+
+            if(order == null)
+            {
+                message = "NullCustomer";
+                return message;
+            }
             foreach (var d in dishes)
             {
-                CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
-
+                if(d.Id > 0)
+                {
+                        CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
+                        message += $"\nБлюдо добавлено Id - {d.Id}";
+                }
+            }
+            if(message == null)
+            {
+                RemoveOrder(order.Id);
+                message = "NullMenu";
+                return message;
             }
             if (addressId != 0)
             {
-                CreateAddressOrder(order.Id, addressId);
+                var addressOrder = CreateAddressOrder(order.Id, addressId);
+                if(addressOrder == null)
+                {
+                    RemoveOrder(order.Id);
+                    message = "NullAddress";
+                    return message;
+                }
             }
-            return "Заказ создан";
+            message += "\nЗаказ создан";
+            return message;
         }
 
         public string RemoveOrder(int id)
         {
             string message;
-            try
+            
+            var order = _context.Orders.FirstOrDefault(o => o.Id == id);
+            if(order == null)
             {
-                var order = _context.Orders.FirstOrDefault(o => o.Id == id);
-                if(order == null)
-                {
-                    message = "Заказ не найден";
-                }
-                else
-                {
-                    _context.Orders.Remove(order);
-                    _context.SaveChanges();
-                    message = "Заказ удален";
-                }
+                message = null;
+                return message;
             }
-            catch
+            else
             {
-                message = "Ошибка при удалении заказа";
+                _context.Orders.Remove(order);
+                _context.SaveChanges();
+                message = "Заказ удален";
+                return message;
             }
-            return message;
         }
 
         private OrderDTO GetListDishes(OrderEntity order)
@@ -206,8 +264,6 @@ namespace Web_api_pizza.Services
         
         private PersonDTO GetCustomerOrder(int clientId)
         {
-            //var personDTO = _customerService.GetOneCustomer(clientId);
-            //return personDTO;
             var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == clientId);
             var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
             return personDTO;
@@ -221,7 +277,16 @@ namespace Web_api_pizza.Services
             order.Status = StatusEnum.New;
             if (customerId != 0)
             {
-                order.CustomerEntityId = customerId;
+                var person = GetCustomerOrder(customerId);
+                if(person != null)
+                {
+                    order.CustomerEntityId = customerId;
+                }
+                else
+                {
+                    order = null;
+                    return order;
+                }
             }
             _context.Orders.Add(order);
             _context.SaveChanges();
@@ -236,16 +301,65 @@ namespace Web_api_pizza.Services
 
         private void CreateOrderDishes(int orderId, int dishId, int quantity = 1)
         {
+            if(quantity <= 0)
+            {
+                quantity = 1;
+            }
             var orderDish = new OrderDishEntity { OrderEntityId = orderId, DishEntityId = dishId, Quantity = quantity };
             _context.OrderDishEntities.Add(orderDish);
             _context.SaveChanges();
         }
 
-        private void CreateAddressOrder(int orderId, int addressId)
+        private string CreateAddressOrder(int orderId, int addressId)
         {
+            string message;
+            var findAddress = _addressService.GetDeliveryAddress(addressId);
+            if(findAddress == null)
+            {
+                message = null;
+                return message;
+            }
             var addressOrder = new AddressOrderEntity { OrderEntityId = orderId, AddressEntityId = addressId };
             _context.AddressOrderEntities.Add(addressOrder);
             _context.SaveChanges();
+            message = "связь создана";
+            return message;
         }
+        //private bool CheckStatus(StatusEnum oldStatus, string newStatus)
+        //{
+        //    bool isChangeStatus = false;
+        //    var changeStatus = OrderStatusesDic[newStatus];
+        //    switch(oldStatus)
+        //    {
+        //        case StatusEnum.New:
+        //            if(changeStatus == StatusEnum.Confirmed || changeStatus == StatusEnum.Cancelled)
+        //            {
+        //                isChangeStatus = true;
+        //            }
+        //            break;
+        //        case StatusEnum.Confirmed:
+        //            if(changeStatus == StatusEnum.Preparing)
+        //            {
+        //                isChangeStatus = true;
+        //            }
+        //            break;
+        //        case StatusEnum.Preparing:
+        //            if(changeStatus == StatusEnum.OnTheWay)
+        //            {
+        //                isChangeStatus = true;
+        //            }
+        //            break;
+        //        case StatusEnum.OnTheWay:
+        //            if (changeStatus == StatusEnum.Delivered)
+        //            {
+        //                isChangeStatus = true;
+        //            }
+        //            break;
+        //        default:
+        //            isChangeStatus = false;
+        //            break;
+        //    }
+        //    return isChangeStatus;
+        //}
     }
 }

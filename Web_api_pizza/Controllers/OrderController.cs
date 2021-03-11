@@ -68,25 +68,85 @@ namespace Web_api_pizza.Controllers
         //работает
         //проработать алгоритм изменения статуса
         [HttpPut("changeStatus")]
-        public string ChangeStatus(int orderId, string orderStatus)
+        public IActionResult ChangeStatus(int orderId, string orderStatus)
         {
+            if(orderId <= 0)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Id  заказа - \"{orderId}\"");
+            }
+            if(orderStatus == null)
+            {
+                ModelState.AddModelError("Status", "Введите статус заказа");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var status = _orderService.ChangeOrderStatus(orderId, orderStatus);
-            return status;
+            if(status == null)
+            {
+                return NotFound($"Заказ не найден Id — {orderId}");
+            }
+            if(status == "BadStatus")
+            {
+                return BadRequest("Недопустимый статус");
+            }
+            return Ok(status);
         }
 
         //работают все 3 
         [HttpPost("create")]
-        public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
+        public IActionResult CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
+            if(dishes == null)
+            {
+                ModelState.AddModelError("Dishes","Выберите блюдо(а)");
+            }
+            if(customerId < 0)
+            {
+                ModelState.AddModelError("customerId", $"Недопустимое значение Id клиента - \"{customerId}\"");
+            }
+            if (addressId < 0)
+            {
+                ModelState.AddModelError("addressId", $"Недопустимое значение Id адреса - \"{addressId}\"");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var order = _orderService.CreateOrder(dishes, customerId, addressId);
-            return order;
+            if(order == "NullMenu")
+            {
+                return BadRequest($"Ошибка при создании заказа: Нет блюд {order}");
+            }
+            if (order == "NullCustomer")
+            {
+                return BadRequest($"Ошибка при создании заказа: Клиент не найден {order}");
+            }
+            if (order == "NullAddress")
+            {
+                return BadRequest($"Ошибка при создании заказа: Адрес не найден {order}");
+            }
+            return Ok(order);
         }
         //работает
-        [HttpDelete("delete")]
-        public string Delete(int id)
+        [HttpDelete("delete/{id}")]
+        public IActionResult Delete(int id)
         {
+            if(id <= 0)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{id}\"");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var order = _orderService.RemoveOrder(id);
-            return order;
+            if(order == null)
+            {
+                return NotFound($"Заказ не найден Id — \"{id}\"");
+            }
+            return Ok(order);
         }
     }
 }
