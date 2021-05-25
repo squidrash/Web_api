@@ -36,13 +36,24 @@ namespace Web_api_pizza.Services
 
         private readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
         {
-            {"Новый", StatusEnum.New },
-            {"Подтвержден", StatusEnum.Confirmed },
-            {"Готовится", StatusEnum.Preparing },
-            {"В пути", StatusEnum.OnTheWay},
-            {"Доставлен", StatusEnum.Delivered},
-            {"Отменен", StatusEnum.Cancelled}
+            {"New", StatusEnum.New },
+            {"Confirmed", StatusEnum.Confirmed },
+            {"Preparing", StatusEnum.Preparing },
+            {"OnTheWay", StatusEnum.OnTheWay},
+            {"Delivered", StatusEnum.Delivered},
+            {"Cancelled", StatusEnum.Cancelled}
         };
+
+        // поменял когда делал сайт
+        //private readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
+        //{
+        //    {"Новый", StatusEnum.New },
+        //    {"Подтвержден", StatusEnum.Confirmed },
+        //    {"Готовится", StatusEnum.Preparing },
+        //    {"В пути", StatusEnum.OnTheWay},
+        //    {"Доставлен", StatusEnum.Delivered},
+        //    {"Отменен", StatusEnum.Cancelled}
+        //};
         private readonly Dictionary<StatusEnum,IEnumerable<StatusEnum>> _statusChangeRule = new Dictionary<StatusEnum, IEnumerable<StatusEnum>>
         {
             { StatusEnum.New, new[]{ StatusEnum.Confirmed, StatusEnum.Cancelled } },
@@ -52,9 +63,14 @@ namespace Web_api_pizza.Services
             { StatusEnum.Delivered, new StatusEnum[] { } },
             { StatusEnum.Cancelled, new StatusEnum[] { } },
         };
+        // поменял когда делал сайт
+        //private readonly List<string> StatusList = new List<string>()
+        //{
+        //    "Новый","Подтвержден","Готовится","В пути","Доставлен","Отменен"
+        //};
         private readonly List<string> StatusList = new List<string>()
         {
-            "Новый","Подтвержден","Готовится","В пути","Доставлен","Отменен"
+            "New","Confirmed","Preparing","OnTheWay","Delivered","Cancelled"
         };
 
         //public List<OrderDTO> GetAllOrders(int customerId = 0)
