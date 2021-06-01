@@ -215,11 +215,17 @@ namespace Web_api_pizza.Services
             {
                 if(d.Id > 0)
                 {
-                        CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
-                        message += $"\nБлюдо добавлено Id - {d.Id}";
+                    var didDishAdd = CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
+                    if(didDishAdd == false)
+                    {
+                        RemoveOrder(order.Id);
+                        message = "NullDish";
+                        return message;
+                    }
+                    message += $"\nБлюдо добавлено Id - {d.Id}";
                 }
             }
-            if(message == null)
+            if (message == null)
             {
                 RemoveOrder(order.Id);
                 message = "NullMenu";
@@ -315,8 +321,15 @@ namespace Web_api_pizza.Services
             return orderFromDb;
         }
 
-        private void CreateOrderDishes(int orderId, int dishId, int quantity = 1)
+        private bool CreateOrderDishes(int orderId, int dishId, int quantity = 1)
         {
+            bool didDishAdd;
+            var findDish = _menuService.GetOneDish(dishId);
+            if(findDish == null)
+            {
+                didDishAdd = false;
+                return didDishAdd;
+            }
             if(quantity <= 0)
             {
                 quantity = 1;
@@ -324,6 +337,8 @@ namespace Web_api_pizza.Services
             var orderDish = new OrderDishEntity { OrderEntityId = orderId, DishEntityId = dishId, Quantity = quantity };
             _context.OrderDishEntities.Add(orderDish);
             _context.SaveChanges();
+            didDishAdd = true;
+            return didDishAdd;
         }
 
         private string CreateAddressOrder(int orderId, int addressId)

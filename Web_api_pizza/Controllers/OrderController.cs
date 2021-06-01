@@ -115,7 +115,11 @@ namespace Web_api_pizza.Controllers
                 return BadRequest(ModelState);
             }
             var order = _orderService.CreateOrder(dishes, customerId, addressId);
-            if(order == "NullMenu")
+            if (order == "NullDish")
+            {
+                return BadRequest($"Ошибка при создании заказа: некоторых блюд нет в меню {order}");
+            }
+            if (order == "NullMenu")
             {
                 return BadRequest($"Ошибка при создании заказа: Нет блюд {order}");
             }
