@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Web_api_pizza.Filters;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
 using Web_api_pizza.Storage.Models;
@@ -11,11 +12,11 @@ namespace Web_api_pizza.Services
 {
     public interface IOrderService
     {
-        public List<OrderDTO> GetAllOrders(int customerId = 0);
         public OrderDTO GetOneOrder(int id);
         public string ChangeOrderStatus(int orderId, string orderStatus);
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0);
         public string RemoveOrder(int id);
+        public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0);
     }
     public class OrderService : IOrderService
     {
@@ -103,28 +104,24 @@ namespace Web_api_pizza.Services
         //    }
         //    return ordersDTO;
         //}
-        public List<OrderDTO> GetAllOrders(int customerId = 0)
+
+        public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
         {
-            List<OrderEntity> ordersEntity;
+            var orders = _context.Orders
+                .Include(o => o.Products)
+                .Include(o => o.AddressOrder)
+                .AsQueryable();
 
             if (customerId != 0)
-            {
-                ordersEntity = _context.Orders
-                    .Where(o => o.CustomerEntityId == customerId)
-                    .OrderByDescending(o => o.CreatTime)
-                    .ToList();
-                foreach( var o in ordersEntity)
-                {
-                    o.CustomerEntityId = 0;
-                }
-            }
-            else
-            {
-                ordersEntity = _context.Orders
-                    .OrderByDescending(o => o.CreatTime)
-                    .ToList();
-            }
+                orders = orders.Where(x => x.CustomerEntityId == customerId);
+
+            orders = filter.Filters(orders);
+
+            List<OrderEntity> ordersEntity;
+            ordersEntity = orders.OrderByDescending(o => o.CreatTime).ToList();
+
             //var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
+
             var ordersDTO = new List<OrderDTO>();
             foreach (var o in ordersEntity)
             {
@@ -134,7 +131,6 @@ namespace Web_api_pizza.Services
             return ordersDTO;
         }
 
-        // нужен ли такой громоздкий метод???
         public OrderDTO GetOneOrder(int id)
         {
             var orderEntity = _context.Orders.

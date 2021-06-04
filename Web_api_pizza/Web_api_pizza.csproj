@@ -21,5 +21,6 @@
     <Folder Include="Services\" />
     <Folder Include="Storage\Enums\" />
     <Folder Include="Migrations\" />
+    <Folder Include="Filters\" />
   </ItemGroup>
 </Project>

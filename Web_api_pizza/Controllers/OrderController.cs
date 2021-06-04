@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Web_api_pizza.Filters;
 using Web_api_pizza.Services;
 using Web_api_pizza.Storage.DTO;
 
@@ -18,19 +19,19 @@ namespace Web_api_pizza.Controllers
             _orderService = orderService;
         }
 
+        
         //работает
         [HttpGet("all")]
-        public IActionResult GetAllOrders()
+        public IActionResult GetAllOrdersTest([FromQuery] OrderFilter filter)
         {
-            var orders = _orderService.GetAllOrders();
+            var orders = _orderService.GetAllOrders(filter);
             return Ok(orders);
         }
 
-        //работает
-        [HttpGet("customer/{id}")]
-        public IActionResult CustomerOrders(int id)
+        [HttpGet("customer/{id}/all/")]
+        public IActionResult CustomerOrders(int id, [FromQuery] OrderFilter filter)
         {
-            if(id <= 0)
+            if (id <= 0)
             {
                 ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{id}\"");
             }
@@ -38,13 +39,16 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var orders = _orderService.GetAllOrders(id);
+
+            var orders = _orderService.GetAllOrders(filter, id);
+
             if (orders == null)
             {
                 return NotFound($"Пользователь не найден Id - \"{id}\"");
             }
             return Ok(orders);
         }
+        
         //работает
         [HttpGet("specific/{id}")]
         public IActionResult GetOneOrder(int id)
