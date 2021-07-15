@@ -22,13 +22,13 @@ namespace Web_api_pizza.Controllers
         
         //работает
         [HttpGet("all")]
-        public IActionResult GetAllOrdersTest([FromQuery] OrderFilter filter)
+        public IActionResult GetAllOrders([FromQuery] OrderFilter filter)
         {
             var orders = _orderService.GetAllOrders(filter);
             return Ok(orders);
         }
 
-        [HttpGet("customer/{id}/all/")]
+        [HttpGet("customer/{id}/")]
         public IActionResult CustomerOrders(int id, [FromQuery] OrderFilter filter)
         {
             if (id <= 0)

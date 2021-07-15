@@ -74,63 +74,97 @@ namespace Web_api_pizza.Services
             "New","Confirmed","Preparing","OnTheWay","Delivered","Cancelled"
         };
 
-        //public List<OrderDTO> GetAllOrders(int customerId = 0)
+        //public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
         //{
-        //    List<OrderEntity> ordersEntity;
+        //    var orders = _context.Orders
+        //        .Include(o => o.Products)
+        //        .ThenInclude(p => p.Dish)
+        //        .Include(o => o.AddressOrder)
+        //        .ThenInclude(a => a.Address)
+        //        .AsQueryable();
 
         //    if (customerId != 0)
-        //    {
-        //        ordersEntity = _context.Orders
-        //            .Include(o => o.Customer)
-        //            .Where(o => o.CustomerEntityId == customerId)
-        //            .Include(o => o.Products)
-        //            .ThenInclude(p => p.Dish)
-        //            .OrderByDescending(o => o.CreatTime)
-        //            .ToList();
-        //    }
-        //    else
-        //    {
-        //        ordersEntity = _context.Orders
-        //            .Include(o => o.Products)
-        //            .OrderByDescending(o=> o.CreatTime)
-        //            .ToList();
-        //    }
-        //    //var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
-        //    var ordersDTO = new List<OrderDTO>();
+        //        orders = orders.Where(x => x.CustomerEntityId == customerId);
+
+        //    orders = filter.Filters(orders);
+
+
+        //    List<OrderEntity> ordersEntity;
+        //    ordersEntity = orders.OrderByDescending(o => o.CreatTime).ToList();
+
+        //    Console.WriteLine("Это объект из базы");
         //    foreach (var o in ordersEntity)
         //    {
-        //        var order = GetListDishes(o);
-        //        ordersDTO.Add(order);
+        //        Console.WriteLine($"продукты заказа {o.Id}");
+        //        foreach (var p in o.Products)
+        //        {
+        //            Console.WriteLine(p.Dish.ProductName);
+        //            Console.WriteLine(p.Dish.Price);
+        //        }
+        //        Console.WriteLine("адрес");
+
+        //        if (o.AddressOrder != null)
+        //        {
+        //            Console.WriteLine(o.AddressOrder.Address.City);
+        //        }
+
         //    }
+
+        //    var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
+
+        //    //var ordersDTO = new List<OrderDTO>();
+        //    //foreach (var o in ordersEntity)
+        //    //{
+        //    //    var order = GetOneOrder(o.Id);
+        //    //    ordersDTO.Add(order);
+        //    //}
         //    return ordersDTO;
         //}
 
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
         {
             var orders = _context.Orders
+                .Include(o => o.Customer)
                 .Include(o => o.Products)
+                .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
+                .ThenInclude(a => a.Address)
                 .AsQueryable();
 
             if (customerId != 0)
                 orders = orders.Where(x => x.CustomerEntityId == customerId);
 
             orders = filter.Filters(orders);
+            
 
             List<OrderEntity> ordersEntity;
             ordersEntity = orders.OrderByDescending(o => o.CreatTime).ToList();
 
-            //var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
-
-            var ordersDTO = new List<OrderDTO>();
+            Console.WriteLine("Это объект из базы");
             foreach (var o in ordersEntity)
             {
-                var order = GetOneOrder(o.Id);
-                ordersDTO.Add(order);
+                Console.WriteLine(o.Customer.Name);
+                Console.WriteLine($"продукты заказа {o.Id}");
+                foreach (var p in o.Products)
+                {
+                    Console.WriteLine(p.Dish.ProductName);
+                    Console.WriteLine(p.Dish.Price);
+                }
+                Console.WriteLine("адрес");
+
+                if (o.AddressOrder != null)
+                {
+                    Console.WriteLine(o.AddressOrder.Address.City);
+                }
+
             }
+            var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
+            
             return ordersDTO;
         }
 
+
+        //нужен ли этот  метод вообще?
         public OrderDTO GetOneOrder(int id)
         {
             var orderEntity = _context.Orders.

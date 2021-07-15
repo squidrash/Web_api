@@ -68,7 +68,11 @@ namespace Web_api_pizza.Controllers
             {
                 ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{customer.Id}\"");
             }
-            if(!ModelState.IsValid)
+            if (customer.Discount < 0 || customer.Discount > 20)
+            {
+                ModelState.AddModelError("Id", $"Недопустимое значение Discount - \"{customer.Discount}\"");
+            }
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }

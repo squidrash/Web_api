@@ -57,35 +57,57 @@ namespace Web_api_pizza.Services
             var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
             return personDTO;
         }
+
+
+        //public CustomerDTO GetCustomerWithAllInfo(int id)
+        //{
+        //    var customerEntity = _context.Customers
+        //        .Where(c => c.Id == id)
+        //        .Include(c => c.Orders)
+        //            .ThenInclude(o => o.Products)
+        //            .ThenInclude(p => p.Dish)
+        //        .Include(u => u.Addresses)
+        //            .ThenInclude(a => a.Address)
+        //        .FirstOrDefault();
+        //    var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
+
+        //    var listOrders = new List<OrderDTO>();
+        //    foreach (var o in customerEntity.Orders)
+        //    {
+        //        var order = _orderService.GetOneOrder(o.Id);
+        //        order.Client = null;
+        //        listOrders.Add(order);
+        //    }
+        //    var listAddresses = new List<AddressDTO>();
+        //    foreach (var a in customerEntity.Addresses)
+        //    {
+        //        var address = _addressService.GetDeliveryAddress(a.AddressEntityId);
+        //        listAddresses.Add(address);
+        //    }
+        //    customerDTO.Orders = listOrders;
+        //    customerDTO.Address = listAddresses;
+        //    return customerDTO;
+        //}
         public CustomerDTO GetCustomerWithAllInfo(int id)
         {
                 var customerEntity = _context.Customers
                     .Where(c => c.Id == id)
                     .Include(c => c.Orders)
+                        .ThenInclude(o => o.Products)
+                        .ThenInclude(p => p.Dish)
                     .Include(u => u.Addresses)
+                        .ThenInclude(a => a.Address)
                     .FirstOrDefault();
                 var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
-            
-            var listOrders = new List<OrderDTO>();
-            foreach (var o in customerEntity.Orders)
-            {
-                var order = _orderService.GetOneOrder(o.Id);
-                order.Client = null;
-                listOrders.Add(order);
-            }
-            var listAddresses = new List<AddressDTO>();
-            foreach (var a in customerEntity.Addresses)
-            {
-                var address = _addressService.GetDeliveryAddress(a.AddressEntityId);
-                listAddresses.Add(address);
-            }
-            customerDTO.Orders = listOrders;
-            customerDTO.Address = listAddresses;
             return customerDTO;
         }
         public string RegistrationCustomer(CustomerDTO customer)
         {
             customer.Id = 0;
+            if(customer.Discount == null)
+            {
+                customer.Discount = 0;
+            }
             string message;
             var checkCustomer = _context.Customers
                 .Where(c => c.Name == customer.Name)
