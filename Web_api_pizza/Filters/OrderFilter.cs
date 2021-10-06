@@ -9,6 +9,9 @@ namespace Web_api_pizza.Filters
 {
     public class OrderFilter
     {
+        //[FromQuery(Name = "customer_id")]
+        //public int? CustomerId { get; set; }
+
         [FromQuery(Name="has_customer")]
         public bool? HasCustomer { get; set; }
 
@@ -18,9 +21,12 @@ namespace Web_api_pizza.Filters
         [FromQuery(Name = "status")]
         public StatusEnum? Status { get; set; }
 
-
         public IQueryable<OrderEntity> Filters(IQueryable<OrderEntity> query)
         {
+            //if(CustomerId.HasValue)
+            //{
+            //    query = query.Where(x => x.CustomerEntityId == CustomerId);
+            //}
             if (HasCustomer.HasValue)
             {
                 if (HasCustomer == true)

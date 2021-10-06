@@ -124,7 +124,6 @@ namespace Web_api_pizza.Services
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
         {
             var orders = _context.Orders
-                .Include(o => o.Customer)
                 .Include(o => o.Products)
                 .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
@@ -132,7 +131,14 @@ namespace Web_api_pizza.Services
                 .AsQueryable();
 
             if (customerId != 0)
+            {
                 orders = orders.Where(x => x.CustomerEntityId == customerId);
+                
+            }
+            orders = orders.Include(o => o.Customer)
+                .AsQueryable();
+            
+            
 
             orders = filter.Filters(orders);
             
@@ -140,24 +146,28 @@ namespace Web_api_pizza.Services
             List<OrderEntity> ordersEntity;
             ordersEntity = orders.OrderByDescending(o => o.CreatTime).ToList();
 
-            Console.WriteLine("Это объект из базы");
-            foreach (var o in ordersEntity)
-            {
-                Console.WriteLine(o.Customer.Name);
-                Console.WriteLine($"продукты заказа {o.Id}");
-                foreach (var p in o.Products)
-                {
-                    Console.WriteLine(p.Dish.ProductName);
-                    Console.WriteLine(p.Dish.Price);
-                }
-                Console.WriteLine("адрес");
+            //Console.WriteLine("Это объект из базы");
+            //foreach (var o in ordersEntity)
+            //{
+            //    if (o.Customer != null)
+            //    {
+            //        Console.WriteLine(o.Customer.Name);
+            //    }
 
-                if (o.AddressOrder != null)
-                {
-                    Console.WriteLine(o.AddressOrder.Address.City);
-                }
+            //    Console.WriteLine($"продукты заказа {o.Id}");
+            //    foreach (var p in o.Products)
+            //    {
+            //        Console.WriteLine(p.Dish.ProductName);
+            //        Console.WriteLine(p.Dish.Price);
+            //    }
+            //    Console.WriteLine("адрес");
 
-            }
+            //    if (o.AddressOrder != null)
+            //    {
+            //        Console.WriteLine(o.AddressOrder.Address.City);
+            //    }
+
+            //}
             var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
             
             return ordersDTO;
@@ -165,27 +175,41 @@ namespace Web_api_pizza.Services
 
 
         //нужен ли этот  метод вообще?
+        //public OrderDTO GetOneOrder(int id)
+        //{
+        //    var orderEntity = _context.Orders.
+        //        Where(o => o.Id == id)
+        //        .Include(o => o.Products)
+        //        .Include(o => o.AddressOrder)
+        //        .FirstOrDefault();
+        //    var getListDishes = GetListDishes(orderEntity);
+        //    var order = getListDishes;
+
+        //    if (orderEntity.AddressOrder != null)
+        //    {
+        //        var getOrderAddress = GetOrderAddress(orderEntity.AddressOrder.AddressEntityId);
+        //        order.Address = getOrderAddress;
+        //    }
+        //    if (orderEntity.CustomerEntityId != null)
+        //    {
+        //        var getCustomerOrder = GetCustomerOrder((int)orderEntity.CustomerEntityId);
+        //        order.Client = getCustomerOrder;
+        //    }
+        //    return order;
+        //}
+
         public OrderDTO GetOneOrder(int id)
         {
             var orderEntity = _context.Orders.
                 Where(o => o.Id == id)
+                .Include(o => o.Customer)
                 .Include(o => o.Products)
+                .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
+                .ThenInclude(a => a.Address)
                 .FirstOrDefault();
-            var getListDishes = GetListDishes(orderEntity);
-            var order = getListDishes;
-
-            if(orderEntity.AddressOrder != null)
-            {
-                var getOrderAddress = GetOrderAddress(orderEntity.AddressOrder.AddressEntityId);
-                order.Address = getOrderAddress;
-            }
-            if(orderEntity.CustomerEntityId != null)
-            {
-                var getCustomerOrder = GetCustomerOrder((int)orderEntity.CustomerEntityId);
-                order.Client = getCustomerOrder;
-            }
-            return order;
+            var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(orderEntity);
+            return orderDTO;
         }
 
         public string ChangeOrderStatus(int orderId, string orderStatus)
@@ -231,6 +255,9 @@ namespace Web_api_pizza.Services
             //}
         }
 
+
+        //переделать, нужно создавать закас с блюдами, а не с клиентом
+        // и сразу добавить итоговый чек на весь заказ
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
             string message = null;
@@ -294,32 +321,32 @@ namespace Web_api_pizza.Services
             }
         }
 
-        private OrderDTO GetListDishes(OrderEntity order)
-        {
-            var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(order);
-            var dishesList = new List<DishDTO>();
-            foreach (var d in order.Products)
-            {
-                var dishDTO = _menuService.GetOneDish(d.DishEntityId);
-                dishDTO.Quantity = d.Quantity;
-                dishesList.Add(dishDTO);
-            }
-            orderDTO.Dishes = dishesList;
-            return orderDTO;
-        }
-        private AddressDTO GetOrderAddress(int addressId)
-        {
-            var address = _addressService.GetDeliveryAddress(addressId);
+        //private OrderDTO GetListDishes(OrderEntity order)
+        //{
+        //    var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(order);
+        //    var dishesList = new List<DishDTO>();
+        //    foreach (var d in order.Products)
+        //    {
+        //        var dishDTO = _menuService.GetOneDish(d.DishEntityId);
+        //        dishDTO.Quantity = d.Quantity;
+        //        dishesList.Add(dishDTO);
+        //    }
+        //    orderDTO.Dishes = dishesList;
+        //    return orderDTO;
+        //}
+        //private AddressDTO GetOrderAddress(int addressId)
+        //{
+        //    var address = _addressService.GetDeliveryAddress(addressId);
 
-            return address;
-        }
+        //    return address;
+        //}
         
-        private PersonDTO GetCustomerOrder(int clientId)
-        {
-            var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == clientId);
-            var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
-            return personDTO;
-        }
+        //private PersonDTO GetCustomerOrder(int clientId)
+        //{
+        //    var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == clientId);
+        //    var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
+        //    return personDTO;
+        //}
 
         private OrderEntity CreateCustomerOrder(int customerId)
         {
@@ -329,8 +356,9 @@ namespace Web_api_pizza.Services
             order.Status = StatusEnum.New;
             if (customerId != 0)
             {
-                var person = GetCustomerOrder(customerId);
-                if(person != null)
+                //var person = GetCustomerOrder(customerId);
+                var person = _context.Customers.FirstOrDefault(c => c.Id == customerId);
+                if (person != null)
                 {
                     order.CustomerEntityId = customerId;
                 }
