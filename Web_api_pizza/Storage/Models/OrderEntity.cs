@@ -13,8 +13,9 @@ namespace Web_api_pizza.Storage.Models
 
         public List<OrderDishEntity> Products { get; set; }
 
-        public DateTime CreatTime { get; set; } 
+        public DateTime CreatTime { get; set; }
         public StatusEnum Status { get; set; }
+        public decimal TotalSum { get; set; }
 
         public AddressOrderEntity AddressOrder { get; set; }
     }

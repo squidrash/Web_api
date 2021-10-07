@@ -255,50 +255,39 @@ namespace Web_api_pizza.Services
             //}
         }
 
-
-        //переделать, нужно создавать закас с блюдами, а не с клиентом
-        // и сразу добавить итоговый чек на весь заказ
+        //новый
         public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
         {
             string message = null;
-            var order = CreateCustomerOrder(customerId);
-
+            var order = CreateOrderDishes(dishes);
             if(order == null)
             {
-                message = "NullCustomer";
-                return message;
-            }
-            foreach (var d in dishes)
-            {
-                if(d.Id > 0)
-                {
-                    var didDishAdd = CreateOrderDishes(order.Id, (int)d.Id, d.Quantity);
-                    if(didDishAdd == false)
-                    {
-                        RemoveOrder(order.Id);
-                        message = "NullDish";
-                        return message;
-                    }
-                    message += $"\nБлюдо добавлено Id - {d.Id}";
-                }
-            }
-            if (message == null)
-            {
-                RemoveOrder(order.Id);
                 message = "NullMenu";
                 return message;
+                
             }
+
+            if(customerId != 0)
+            {
+                var customerOrder = CreateOrderCustomer(order, customerId);
+                if (customerOrder == null)
+                {
+                    message = "NullCustomer";
+                    return message;
+                }
+            }
+
             if (addressId != 0)
             {
                 var addressOrder = CreateAddressOrder(order.Id, addressId);
-                if(addressOrder == null)
+                if (addressOrder == null)
                 {
                     RemoveOrder(order.Id);
                     message = "NullAddress";
                     return message;
                 }
             }
-            message += "\nЗаказ создан";
+            message = "Заказ создан";
             return message;
         }
 
@@ -348,55 +337,89 @@ namespace Web_api_pizza.Services
         //    return personDTO;
         //}
 
-        private OrderEntity CreateCustomerOrder(int customerId)
-        {
-            var order = new OrderEntity();
+        
 
-            order.CreatTime = DateTime.Now;
-            order.Status = StatusEnum.New;
-            if (customerId != 0)
-            {
-                //var person = GetCustomerOrder(customerId);
-                var person = _context.Customers.FirstOrDefault(c => c.Id == customerId);
-                if (person != null)
-                {
-                    order.CustomerEntityId = customerId;
-                }
-                else
-                {
-                    order = null;
-                    return order;
-                }
-            }
+        private OrderEntity CreateOrderDishes(List<DishDTO> dishes)
+        {
+
+            //validate
+            
+
+            var dishEntity = _context.Dishes
+                .Where(x => dishes.Select(y => y.Id.Value)
+                                  .Contains(x.Id))
+                .ToList();
+
+            if (dishEntity.Count != dishes.Count)
+                return null;
+
+            var order = new OrderEntity() {
+                CreatTime = DateTime.Now,
+                Status = StatusEnum.New
+            };
             _context.Orders.Add(order);
             _context.SaveChanges();
 
-            var orderFromDb = _context.Orders
-                .Where(o => o.CreatTime == order.CreatTime)
-                .Where(o => o.Status == order.Status)
-                .Where(o => o.CustomerEntityId == order.CustomerEntityId)
-                .FirstOrDefault();
-            return orderFromDb;
-        }
+            decimal total = 0;
+            var orderDish = dishEntity.Select(x =>
+            {
+                var quantity = dishes.Where(d => d.Id == x.Id)
+                                     .Select(y => y.Quantity > 0 ? y.Quantity : 1)
+                                     .First();
 
-        private bool CreateOrderDishes(int orderId, int dishId, int quantity = 1)
-        {
-            bool didDishAdd;
-            var findDish = _menuService.GetOneDish(dishId);
-            if(findDish == null)
-            {
-                didDishAdd = false;
-                return didDishAdd;
-            }
-            if(quantity <= 0)
-            {
-                quantity = 1;
-            }
-            var orderDish = new OrderDishEntity { OrderEntityId = orderId, DishEntityId = dishId, Quantity = quantity };
-            _context.OrderDishEntities.Add(orderDish);
+                total += quantity * x.Price;
+
+                return new OrderDishEntity
+                {
+                    OrderEntityId = order.Id,
+                    DishEntityId = x.Id,
+                    Quantity = quantity
+                };
+            });
+
+            _context.OrderDishEntities.AddRange(orderDish);
+            order.TotalSum = total;
             _context.SaveChanges();
-            didDishAdd = true;
-            return didDishAdd;
+
+
+            /*  decimal totalSum = 0;
+              foreach(var d in dishes)
+              {
+                  var findDish = _menuService.GetOneDish(d.Id.Value);
+                  if (findDish == null)
+                  {
+                      RemoveOrder(orderFromDb.Id);
+                      return null;
+                  }
+                  if (d.Quantity <= 0)
+                  {
+                      d.Quantity = 1;
+                  }
+                  totalSum += findDish.Price * d.Quantity;
+
+                  //можно ли это действие сделать один раз?
+                  var orderDish = new OrderDishEntity { OrderEntityId = orderFromDb.Id, DishEntityId = (int)d.Id, Quantity = d.Quantity };
+                  _context.OrderDishEntities.Add(orderDish);
+                  _context.SaveChanges();
+              }
+            */
+
+            return order;
+        }
+        private string CreateOrderCustomer(OrderEntity order, int customerId)
+        {
+            string message;
+            var findCustomer = _context.Customers.FirstOrDefault(c => c.Id == customerId);
+            if (findCustomer == null)
+            {
+                message = null;
+                return message;
+                
+            }
+            order.CustomerEntityId = customerId;
+            _context.SaveChanges();
+            message = "связь создана";
+            return message;
         }
 
         private string CreateAddressOrder(int orderId, int addressId)
@@ -414,41 +437,5 @@ namespace Web_api_pizza.Services
             message = "связь создана";
             return message;
         }
-        //private bool CheckStatus(StatusEnum oldStatus, string newStatus)
-        //{
-        //    bool isChangeStatus = false;
-        //    var changeStatus = OrderStatusesDic[newStatus];
-        //    switch(oldStatus)
-        //    {
-        //        case StatusEnum.New:
-        //            if(changeStatus == StatusEnum.Confirmed || changeStatus == StatusEnum.Cancelled)
-        //            {
-        //                isChangeStatus = true;
-        //            }
-        //            break;
-        //        case StatusEnum.Confirmed:
-        //            if(changeStatus == StatusEnum.Preparing)
-        //            {
-        //                isChangeStatus = true;
-        //            }
-        //            break;
-        //        case StatusEnum.Preparing:
-        //            if(changeStatus == StatusEnum.OnTheWay)
-        //            {
-        //                isChangeStatus = true;
-        //            }
-        //            break;
-        //        case StatusEnum.OnTheWay:
-        //            if (changeStatus == StatusEnum.Delivered)
-        //            {
-        //                isChangeStatus = true;
-        //            }
-        //            break;
-        //        default:
-        //            isChangeStatus = false;
-        //            break;
-        //    }
-        //    return isChangeStatus;
-        //}
     }
 }
