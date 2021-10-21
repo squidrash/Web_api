@@ -17,6 +17,6 @@ namespace Web_api_pizza.Storage.Models
         public string Phone { get; set; }
         public int? Discount { get; set; }
 
-        public List<OrderEntity> Orders { get; set; }
+        public List<CustomerOrderEntity> Orders { get; set; }
     }
 }
