@@ -50,6 +50,7 @@ namespace Web_api_pizza.Services
             }
             if(customerId != 0)
             {
+                //добавить проверку клиента
                 var findAddress = FindAddress(address);
                 var checkCustomerAddress = _context.CustomerAddressEntities
                     .Where(c => c.CustomerEntityId == customerId && c.AddressEntityId == findAddress.Id)
