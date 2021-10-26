@@ -31,11 +31,11 @@ namespace Web_api_pizza.Filters
             {
                 if (HasCustomer == true)
                 {
-                    query = query.Where(x => x.CustomerEntityId != null);
+                    query = query.Where(x => x.Customer != null);
                 }
                 else
                 {
-                    query = query.Where(x => x.CustomerEntityId == null);
+                    query = query.Where(x => x.Customer == null);
                 }
             }
             if (HasAddress.HasValue)

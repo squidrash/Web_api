@@ -93,9 +93,10 @@ namespace Web_api_pizza.Services
                 var customerEntity = _context.Customers
                     .Where(c => c.Id == id)
                     .Include(c => c.Orders)
+                        .ThenInclude(ce=> ce.Order)
                         .ThenInclude(o => o.Products)
                         .ThenInclude(p => p.Dish)
-                    .Include(u => u.Addresses)
+                    .Include(c => c.Addresses)
                         .ThenInclude(a => a.Address)
                     .FirstOrDefault();
                 var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);

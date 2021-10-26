@@ -124,21 +124,19 @@ namespace Web_api_pizza.Services
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
         {
             var orders = _context.Orders
+                .Include(o => o.Customer)
+                    .ThenInclude(c => c.Customer)
                 .Include(o => o.Products)
-                .ThenInclude(p => p.Dish)
+                    .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
-                .ThenInclude(a => a.Address)
+                    .ThenInclude(a => a.Address)
                 .AsQueryable();
 
             if (customerId != 0)
             {
-                orders = orders.Where(x => x.CustomerEntityId == customerId);
+                orders = orders.Where(x => x.Customer.CustomerEntityId == customerId);
                 
             }
-            orders = orders.Include(o => o.Customer)
-                .AsQueryable();
-            
-            
 
             orders = filter.Filters(orders);
             
@@ -416,7 +414,9 @@ namespace Web_api_pizza.Services
                 return message;
                 
             }
-            order.CustomerEntityId = customerId;
+            //order.Customer.CustomerEntityId = customerId;
+            var customerOrder = new CustomerOrderEntity { CustomerEntityId = customerId, OrderEntityId = order.Id };
+            _context.CustomerOrderEntities.Add(customerOrder);
             _context.SaveChanges();
             message = "связь создана";
             return message;
