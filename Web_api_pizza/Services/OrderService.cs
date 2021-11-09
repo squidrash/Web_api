@@ -202,9 +202,9 @@ namespace Web_api_pizza.Services
                 Where(o => o.Id == id)
                 .Include(o => o.Customer)
                 .Include(o => o.Products)
-                .ThenInclude(p => p.Dish)
+                    .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
-                .ThenInclude(a => a.Address)
+                    .ThenInclude(a => a.Address)
                 .FirstOrDefault();
             var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(orderEntity);
             return orderDTO;

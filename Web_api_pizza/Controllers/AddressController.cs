@@ -35,17 +35,13 @@ namespace Web_api_pizza.Controllers
 
         
         [HttpPost("Create")]
-        public IActionResult CreateAddress(AddressDTO address, int customerId = 0)
+        public IActionResult CreateAddress(AddressDTO address)
         {
-            if (customerId < 0)
-            {
-                ModelState.AddModelError("customerId", $"Недопустимое значение Id - \"{customerId}\"");
-            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var message = _addressService.CreateDeliveryAddress(address, customerId);
+            var message = _addressService.CreateDeliveryAddress(address);
             return Ok(message);
         }
 

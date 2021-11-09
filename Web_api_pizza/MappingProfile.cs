@@ -45,7 +45,9 @@ namespace Web_api_pizza
                 .ForMember(dto => dto.Status, opt => opt.MapFrom(en => en.Order.Status))
                 .ForMember(dto => dto.CreatTime, opt => opt.MapFrom(en => en.Order.CreatTime))
                 .ForMember(dto => dto.TotalSum, opt => opt.MapFrom(en => en.Order.TotalSum))
-                .ForMember(dto => dto.Dishes, opt => opt.MapFrom(en => en.Order.Products));
+                .ForMember(dto => dto.Dishes, opt => opt.MapFrom(en => en.Order.Products))
+                .ForMember(dto => dto.Address, opt => opt.MapFrom(en => en.Order.AddressOrder));
+
 
 
             CreateMap<CustomerAddressEntity, AddressDTO>()
