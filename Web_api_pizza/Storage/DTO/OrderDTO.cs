@@ -7,9 +7,8 @@ namespace Web_api_pizza.Storage.DTO
     public class OrderDTO
     {
         public int Id { get; set; }
-
-        //public int? CustomerEntityId { get; set; }
-        public PersonDTO Client { get; set; }
+        
+        public CustomerDTO Client { get; set; }
         public DateTime CreatTime { get; set; }
         public StatusEnum Status { get; set; }
         public decimal TotalSum { get; set; }

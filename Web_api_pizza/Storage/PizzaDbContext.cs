@@ -13,6 +13,8 @@ namespace Web_api_pizza.Storage.DTO
         public DbSet<AddressEntity> Addresses { get; set; }
         public DbSet<AddressOrderEntity> AddressOrderEntities { get; set; }
         public DbSet<CustomerAddressEntity> CustomerAddressEntities { get; set; }
+        public DbSet<CustomerOrderEntity> CustomerOrderEntities { get; set; }
+
 
         public PizzaDbContext(DbContextOptions<PizzaDbContext> options)
             : base (options)

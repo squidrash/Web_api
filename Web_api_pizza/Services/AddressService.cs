@@ -9,9 +9,10 @@ namespace Web_api_pizza.Services
     public interface IAddressService
     {
         public AddressDTO GetDeliveryAddress(int id);
-        public string CreateDeliveryAddress(AddressDTO address, int customerId = 0);
+        public string CreateDeliveryAddress(AddressDTO address);
         public string EditDeliveryAddress(AddressDTO address);
         public string RemoveDeliveryAddress(int id);
+        public AddressEntity FindAddress(AddressDTO address);
     }
     public class AddressService : IAddressService
     {
@@ -29,7 +30,7 @@ namespace Web_api_pizza.Services
                 var addressDTO = _mapper.Map<AddressEntity, AddressDTO>(addressEntity);
                 return addressDTO;
         }
-        public string CreateDeliveryAddress(AddressDTO address, int customerId = 0)
+        public string CreateDeliveryAddress(AddressDTO address)
         {
             address.Id = 0;
             string message;
@@ -48,34 +49,9 @@ namespace Web_api_pizza.Services
             { 
                 message = "Адрес уже есть в базе";
             }
-            if(customerId != 0)
-            {
-                //добавить проверку клиента
-                var findAddress = FindAddress(address);
-                var checkCustomerAddress = _context.CustomerAddressEntities
-                    .Where(c => c.CustomerEntityId == customerId && c.AddressEntityId == findAddress.Id)
-                    .FirstOrDefault();
-                if(checkCustomerAddress == null)
-                {
-                    var customerAddress = new CustomerAddressEntity { AddressEntityId = findAddress.Id, CustomerEntityId = customerId };
-                    _context.CustomerAddressEntities.Add(customerAddress);
-                    _context.SaveChanges();
-                    //ненужное сообщение для клиента
-                    //только для проверки
-                    //удалить после тестирования
-                    message += "\nСвязь между пользователем и адресом создана";
-                }
-                //ненужное сообщение для клиента
-                //только для проверки
-                //удалить после тестирования
-                else
-                {
-                    message += "\nСвязь между пользователем и адресом уже существует";
-                }
-            }
             return message;
         }
-        private AddressEntity FindAddress(AddressDTO address)
+        public AddressEntity FindAddress(AddressDTO address)
         {
             var findAddress = _context.Addresses
                 .Where(a => a.City == address.City)
@@ -86,6 +62,7 @@ namespace Web_api_pizza.Services
                 .FirstOrDefault();
             return findAddress;
         }
+
         public string EditDeliveryAddress(AddressDTO address)
         {
             string message;
@@ -114,6 +91,7 @@ namespace Web_api_pizza.Services
             message = "Адрес изменен";
             return message;
         }
+
         public string RemoveDeliveryAddress(int id)
         {
             var removableAddress = _context.Addresses.FirstOrDefault(a => a.Id == id);

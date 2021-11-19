@@ -8,9 +8,6 @@ namespace Web_api_pizza.Storage.Models
     {
         public int Id { get; set; }
 
-        public int? CustomerEntityId { get; set; }
-        public CustomerEntity Customer { get; set; }
-
         public List<OrderDishEntity> Products { get; set; }
 
         public DateTime CreatTime { get; set; }
@@ -18,5 +15,6 @@ namespace Web_api_pizza.Storage.Models
         public decimal TotalSum { get; set; }
 
         public AddressOrderEntity AddressOrder { get; set; }
+        public CustomerOrderEntity Customer { get; set; }
     }
 }

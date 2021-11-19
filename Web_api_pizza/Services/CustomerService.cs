@@ -27,19 +27,22 @@ namespace Web_api_pizza.Services
         //public void DeleteManyCustomers(int[] customersId);
 
         public string EditCustomer(CustomerDTO customer);
+
+        public string CreateCustomerAddress(int customerId, AddressDTO address);
+        public string EditCustomerAddress(int customerId, int oldAddressId, AddressDTO newAddress);
+        public string RemoveCustomerAddress(int customerId, int addressId);
+
     }
     public class CustomerService : ICustomerService
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        private readonly IOrderService _orderService;
         private readonly IAddressService _addressService;
         public CustomerService(PizzaDbContext context, IMapper mapper,
-            IOrderService orderService, IAddressService addressService)
+            IAddressService addressService)
         {
             _context = context;
             _mapper = mapper;
-            _orderService = orderService;
             _addressService = addressService;
         }
         public List<CustomerDTO> GetAllCustomers()
@@ -48,7 +51,7 @@ namespace Web_api_pizza.Services
                 .OrderBy(c => c.Name)
                 .ThenBy(c => c.LastName)
                 .ToList();
-            var customersDTO = _mapper.Map<List<CustomerEntity>, List<CustomerDTO>> (customersEntity);
+            var customersDTO = _mapper.Map<List<CustomerEntity>, List<CustomerDTO>>(customersEntity);
             return customersDTO;
         }
         public PersonDTO GetOneCustomer(int id)
@@ -57,54 +60,31 @@ namespace Web_api_pizza.Services
             var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
             return personDTO;
         }
-
-
-        //public CustomerDTO GetCustomerWithAllInfo(int id)
-        //{
-        //    var customerEntity = _context.Customers
-        //        .Where(c => c.Id == id)
-        //        .Include(c => c.Orders)
-        //            .ThenInclude(o => o.Products)
-        //            .ThenInclude(p => p.Dish)
-        //        .Include(u => u.Addresses)
-        //            .ThenInclude(a => a.Address)
-        //        .FirstOrDefault();
-        //    var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
-
-        //    var listOrders = new List<OrderDTO>();
-        //    foreach (var o in customerEntity.Orders)
-        //    {
-        //        var order = _orderService.GetOneOrder(o.Id);
-        //        order.Client = null;
-        //        listOrders.Add(order);
-        //    }
-        //    var listAddresses = new List<AddressDTO>();
-        //    foreach (var a in customerEntity.Addresses)
-        //    {
-        //        var address = _addressService.GetDeliveryAddress(a.AddressEntityId);
-        //        listAddresses.Add(address);
-        //    }
-        //    customerDTO.Orders = listOrders;
-        //    customerDTO.Address = listAddresses;
-        //    return customerDTO;
-        //}
         public CustomerDTO GetCustomerWithAllInfo(int id)
         {
-                var customerEntity = _context.Customers
-                    .Where(c => c.Id == id)
-                    .Include(c => c.Orders)
+            var customerEntity = _context.Customers
+                .Where(c => c.Id == id)
+                .Include(c => c.Orders)
+                    .ThenInclude(ce => ce.Order)
                         .ThenInclude(o => o.Products)
-                        .ThenInclude(p => p.Dish)
-                    .Include(u => u.Addresses)
-                        .ThenInclude(a => a.Address)
-                    .FirstOrDefault();
-                var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
+                            .ThenInclude(p => p.Dish)
+
+                .Include(c => c.Orders)
+                    .ThenInclude(ce => ce.Order)
+                        .ThenInclude(ae => ae.AddressOrder)
+                            .ThenInclude(ad => ad.Address)
+
+                .Include(c => c.Addresses)
+                    .ThenInclude(a => a.Address)
+                .FirstOrDefault();
+            var customerDTO = _mapper.Map<CustomerEntity, CustomerDTO>(customerEntity);
             return customerDTO;
         }
+
         public string RegistrationCustomer(CustomerDTO customer)
         {
             customer.Id = 0;
-            if(customer.Discount == null)
+            if (customer.Discount == null)
             {
                 customer.Discount = 0;
             }
@@ -128,6 +108,7 @@ namespace Web_api_pizza.Services
             }
             return message;
         }
+
         public void RegistrationManyCustomers(List<CustomerDTO> customers)
         {
             var customersEntities = _mapper.Map<List<CustomerDTO>, List<CustomerEntity>>(customers);
@@ -138,29 +119,31 @@ namespace Web_api_pizza.Services
                 .Where(c => c.LastName == customer.LastName)
                 .Where(c => c.Phone == customer.Phone)
                 .FirstOrDefault();
-                if(checkCustomer == null)
+                if (checkCustomer == null)
                 {
                     _context.Customers.Add(customer);
                 }
             }
             _context.SaveChanges();
         }
+
         public string DeleteCustomer(int id)
         {
             string message;
             var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == id);
-                
-            if(removableCustomer == null)
+
+            if (removableCustomer == null)
             {
                 message = null;
                 return message;
             }
-            
+
             _context.Customers.Remove(removableCustomer);
             _context.SaveChanges();
             message = "Пользователь удален";
             return message;
         }
+
         public void DeleteManyCustomers(int[] customersId)
         {
             foreach (var cId in customersId)
@@ -170,7 +153,7 @@ namespace Web_api_pizza.Services
             }
             _context.SaveChanges();
         }
-        
+
         public string EditCustomer(CustomerDTO customer)
         {
             string message;
@@ -181,7 +164,7 @@ namespace Web_api_pizza.Services
                 message = null;
                 return message;
             }
-            if(infoCustomer.Name == customer.Name &&
+            if (infoCustomer.Name == customer.Name &&
             infoCustomer.LastName == customer.LastName &&
             infoCustomer.Phone == customer.Phone &&
             infoCustomer.Discount == customer.Discount)
@@ -189,7 +172,7 @@ namespace Web_api_pizza.Services
                 message = "что изменять то?";
                 return message;
             }
-            
+
             infoCustomer.Name = customer.Name;
             infoCustomer.LastName = customer.LastName;
             infoCustomer.Phone = customer.Phone;
@@ -197,6 +180,92 @@ namespace Web_api_pizza.Services
             _context.SaveChanges();
             message = "Пользователь изменен";
             return message;
+        }
+
+        public string CreateCustomerAddress(int customerId, AddressDTO address)
+        {
+            string message;
+            var findAddress = FindAddress(address);
+            if(findAddress == null)
+            {
+                message = null;
+                return message;
+            }
+
+            var checkCustomerAddress = CheckCustomerAddress(customerId, findAddress.Id);
+            
+            if (checkCustomerAddress == null)
+            {
+                var customerAddress = new CustomerAddressEntity { AddressEntityId = findAddress.Id, CustomerEntityId = customerId };
+                _context.CustomerAddressEntities.Add(customerAddress);
+                _context.SaveChanges();
+                //ненужное сообщение для клиента
+                //только для проверки
+                //удалить после тестирования
+                message = "Связь между пользователем и адресом создана";
+            }
+            //ненужное сообщение для клиента
+            //только для проверки
+            //удалить после тестирования
+            else
+            {
+                message = "Связь между пользователем и адресом уже существует";
+            }
+            return message;
+            
+        }
+
+        public string RemoveCustomerAddress(int customerId, int addressId)
+        {
+            string message;
+            var checkCustomerAddress = CheckCustomerAddress(customerId, addressId);
+            if(checkCustomerAddress == null)
+            {
+                message = null;
+                return message;
+            }
+            _context.CustomerAddressEntities.Remove(checkCustomerAddress);
+            _context.SaveChanges();
+            message = "Связь удалена";
+            return message;
+        }
+
+        public string EditCustomerAddress(int customerId, int oldAddressId, AddressDTO newAddress)
+        {
+            string message;
+            var findAddress = FindAddress(newAddress);
+            if (findAddress == null)
+            {
+                message = "nullNewAddress";
+                return message;
+            }
+
+            var checkCustomerAddress = CheckCustomerAddress(customerId, oldAddressId);
+
+            if (checkCustomerAddress == null)
+            {
+                message = "nullCustomerAddress";
+                return message;
+            }
+            checkCustomerAddress.AddressEntityId = findAddress.Id;
+            _context.SaveChanges();
+            message = "Адрес изменен";
+            return message;
+        }
+
+        private AddressEntity FindAddress(AddressDTO address)
+        {
+            //нужно ли вызывать этот метод из сервиса
+            //или лучше прописать локально?
+            var findAddress = _addressService.FindAddress(address);
+            return findAddress;
+        }
+        private CustomerAddressEntity CheckCustomerAddress(int customerId, int addressId)
+        {
+            var checkCustomerAddress = _context.CustomerAddressEntities
+                .Where(c => c.CustomerEntityId == customerId && c.AddressEntityId == addressId)
+                .FirstOrDefault();
+            return checkCustomerAddress;
         }
 
     }

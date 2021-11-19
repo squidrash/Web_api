@@ -103,5 +103,70 @@ namespace Web_api_pizza.Controllers
             }
             return Ok(message);
         }
+
+        [HttpPost("createConnection")]
+        public IActionResult CreateCustomerAddress(int customerId, AddressDTO address)
+        {
+            if (customerId <= 0)
+            {
+                return BadRequest($"Недопустимое значение Id пользователя - \"{customerId}\"");
+            }
+            var message = _customerService.CreateCustomerAddress(customerId, address);
+            if(message == null)
+            {
+                return BadRequest("Адрес не найден");
+            }
+            return Ok(message);
+        }
+        [HttpDelete("removeConnection")]
+        public IActionResult RemoveCustomerAddress(int customerId, int addressId)
+        {
+            if (customerId <= 0)
+            {
+                ModelState.AddModelError("customerId", $"Недопустимое значение Id пользователя - \"{customerId}\"");
+            }
+            if (addressId <= 0)
+            {
+                ModelState.AddModelError("addressId", $"Недопустимое значение Id адреса - \"{addressId}\"");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var message = _customerService.RemoveCustomerAddress(customerId, addressId);
+            if(message == null)
+            {
+                return BadRequest($" Связь между клиентом с ID-{customerId} и адресом с ID-{addressId} не найдена");
+            }
+            return Ok(message);
+
+        }
+        [HttpPut("editConnection")]
+        public IActionResult EditCustomerAddress(int customerId, int oldAddressId, AddressDTO newAddress)
+        {
+            if (customerId <= 0)
+            {
+                ModelState.AddModelError("customerId", $"Недопустимое значение Id пользователя - \"{customerId}\"");
+            }
+            if (oldAddressId <= 0)
+            {
+                ModelState.AddModelError("addressId", $"Недопустимое значение Id адреса - \"{oldAddressId}\"");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var message = _customerService.EditCustomerAddress(customerId, oldAddressId, newAddress);
+            if(message == "nullNewAddress")
+            {
+                return BadRequest("Адрес не найден");
+            }
+            if(message == "nullCustomerAddress")
+            {
+                return BadRequest($" Связь между клиентом с ID-{customerId} и адресом с ID-{oldAddressId} не найдена");
+            }
+            return Ok(message);
+        }
     }
 }
