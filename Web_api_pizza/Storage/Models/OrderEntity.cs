@@ -16,5 +16,6 @@ namespace Web_api_pizza.Storage.Models
 
         public AddressOrderEntity AddressOrder { get; set; }
         public CustomerOrderEntity Customer { get; set; }
+        public SpecialOfferOrderEntity SpecialOffer { get; set; }
     }
 }

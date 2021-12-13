@@ -2,7 +2,7 @@
 
 namespace Web_api_pizza.Migrations
 {
-    public partial class customerOrderEntity3 : Migration
+    public partial class special_offer_2 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

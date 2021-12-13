@@ -9,10 +9,13 @@ namespace Web_api_pizza.Storage.Models
         public int Id { get; set; }
         [Required]
         public string ProductName { get; set; }
-        public string Description { get; set; }
         public decimal Price { get; set; }
 
-        public List<OrderDishEntity> Orders { get; set; }
+        public string Description { get; set; }
+        public string ShortDescription { get; set; }
 
+
+        public List<SpecialOfferEntity> OfferMainDishes { get; set; }
+        public List<SpecialOfferEntity> OfferExtraDish { get; set; }
     }
 }
