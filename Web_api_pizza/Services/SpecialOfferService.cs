@@ -15,8 +15,8 @@ namespace Web_api_pizza.Services
     {
         public SpecialOfferDTO GetSpecialOffer(int id);
         public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter);
-        public ValidationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
-        public ValidationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
+        public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
+        public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
         public string DeleteSpecialOffer(int specialOfferId);
     }
 
@@ -58,9 +58,9 @@ namespace Web_api_pizza.Services
             return specialOffersDTO;
         }
 
-        //public ValidationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
+        //public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
         //{
-        //    var result = new ValidationResult(false);
+        //    var result = new OperationResult(false);
 
         //    var specialOfferFromDB = _context.Offers
         //        .Where(x => x.PromoCode == specialOffer.PromoCode)
@@ -82,7 +82,7 @@ namespace Web_api_pizza.Services
         //    {
 
         //        result = ValidateGeneralDiscount(specialOffer);
-        //        if(result.IsValid == false)
+        //        if(result.IsSuccess == false)
         //        {
         //            return result;
         //        }
@@ -157,7 +157,7 @@ namespace Web_api_pizza.Services
 
         //        result = ValidateOffersWithDishes(specialOffer, dishEntity, extraDishEntity);
 
-        //        if(result.IsValid == false)
+        //        if(result.IsSuccess == false)
         //        {
         //            return result;
         //        }
@@ -175,9 +175,9 @@ namespace Web_api_pizza.Services
         //    return result;
         //}
 
-        public ValidationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
+        public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
         {
-            var result = new ValidationResult(false);
+            var result = new OperationResult(false);
 
             var specialOfferFromDB = _context.Offers
                 .Where(x => x.PromoCode == specialOffer.PromoCode)
@@ -194,7 +194,7 @@ namespace Web_api_pizza.Services
             {
 
                 result = ValidateGeneralDiscount(specialOffer);
-                if (result.IsValid == false)
+                if (result.IsSuccess == false)
                 {
                     return result;
                 }
@@ -213,7 +213,7 @@ namespace Web_api_pizza.Services
 
                 result = ValidateOffersWithDishes(specialOffer, dishEntity, extraDishEntity);
 
-                if (result.IsValid == false)
+                if (result.IsSuccess == false)
                 {
                     return result;
                 }
@@ -227,7 +227,7 @@ namespace Web_api_pizza.Services
             return result;
         }
 
-        public ValidationResult EditSpecialOffer(SpecialOfferDTO specialOffer)
+        public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer)
         {
             var specialOfferEntity = _context.Offers
                 .Where(so => so.Id == specialOffer.Id)
@@ -236,12 +236,12 @@ namespace Web_api_pizza.Services
             if (specialOfferEntity == null)
                 return null;
 
-            var result = new ValidationResult(false);
+            var result = new OperationResult(false);
 
             if(specialOffer.TypeOffer == TypeOfferEnum.GeneralDiscount)
             {
                 result = ValidateGeneralDiscount(specialOffer);
-                if (result.IsValid == false)
+                if (result.IsSuccess == false)
                 {
                     return result;
                 }
@@ -258,7 +258,7 @@ namespace Web_api_pizza.Services
 
                 result = ValidateOffersWithDishes(specialOffer, dishEntity, extraDishEntity);
 
-                if (result.IsValid == false)
+                if (result.IsSuccess == false)
                 {
                     return result;
                 }
@@ -269,7 +269,7 @@ namespace Web_api_pizza.Services
             specialOfferEntity = _mapper.Map(specialOffer, specialOfferEntity);
             _context.SaveChanges();
 
-            result.IsValid = true;
+            result.IsSuccess = true;
             result.Message = "Изменения сохранены";
             return result;
         }
@@ -291,10 +291,10 @@ namespace Web_api_pizza.Services
             return message;
         }
 
-        private ValidationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)
+        private OperationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)
         {
             Console.WriteLine("скидка");
-            var result = new ValidationResult(false);
+            var result = new OperationResult(false);
             if (specialOffer.Discount < 5 || specialOffer.Discount > 20)
             {
                 result.Message = $"Недопустимый размер скидки — \"{specialOffer.Discount}%\"";
@@ -344,15 +344,15 @@ namespace Web_api_pizza.Services
                 return result;
             }
 
-            result.IsValid = true;
+            result.IsSuccess = true;
             result.Message = "Успешно";
 
             return result;
         }
 
-        private ValidationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer, List<DishEntity> mainDishes, DishEntity extraDish)
+        private OperationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer, List<DishEntity> mainDishes, DishEntity extraDish)
         {
-            var result = new ValidationResult(false);
+            var result = new OperationResult(false);
             if(specialOffer.Discount != 0)
             {
                 result.Message = $"У акции типа {specialOffer.TypeOffer} не должно быть скидки";
@@ -382,7 +382,7 @@ namespace Web_api_pizza.Services
                 return result;
             }
 
-            result.IsValid = true;
+            result.IsSuccess = true;
             result.Message = "Успешно";
             return result;
         }

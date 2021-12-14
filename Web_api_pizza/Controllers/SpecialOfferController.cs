@@ -77,7 +77,7 @@ namespace Web_api_pizza.Controllers
             //}
 
             var result = _specialOfferService.AddNewSpecialOffer(specialOffer);
-            if (result.IsValid == false)
+            if (result.IsSuccess == false)
             {
                 return BadRequest(result.Message);
             }
@@ -109,6 +109,10 @@ namespace Web_api_pizza.Controllers
             if (result == null)
             {
                 return NotFound($"Специальное предложение не найдено. Id - \"{specialOffer.Id}\"");
+            }
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result.Message);
             }
             return Ok(result.Message);
         }
