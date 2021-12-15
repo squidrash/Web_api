@@ -10,16 +10,31 @@ using Web_api_pizza.Storage.DTO;
 namespace Web_api_pizza.Migrations
 {
     [DbContext(typeof(PizzaDbContext))]
-    [Migration("20211021095128_customerOrderEntity3")]
-    partial class customerOrderEntity3
+    [Migration("20211203112259_special_offer_2")]
+    partial class special_offer_2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.12")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 63)
+                .HasAnnotation("ProductVersion", "5.0.12")
+                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+            modelBuilder.Entity("DishEntitySpecialOfferEntity", b =>
+                {
+                    b.Property<int>("MainDishesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OfferMainDishesId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("MainDishesId", "OfferMainDishesId");
+
+                    b.HasIndex("OfferMainDishesId");
+
+                    b.ToTable("OfferMainDishesEntity");
+                });
 
             modelBuilder.Entity("Web_api_pizza.Storage.Models.AddressEntity", b =>
                 {
@@ -153,11 +168,17 @@ namespace Web_api_pizza.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ShortDescription")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -211,6 +232,82 @@ namespace Web_api_pizza.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.SpecialOfferEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Discount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ExtraDishId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PromoCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TypeOffer")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExtraDishId");
+
+                    b.ToTable("Offers");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.SpecialOfferOrderEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<int>("OrderEntityId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SpecialOfferEntity")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SpecialOfferId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderEntityId")
+                        .IsUnique();
+
+                    b.HasIndex("SpecialOfferId");
+
+                    b.ToTable("SpecialOfferOrderEntities");
+                });
+
+            modelBuilder.Entity("DishEntitySpecialOfferEntity", b =>
+                {
+                    b.HasOne("Web_api_pizza.Storage.Models.DishEntity", null)
+                        .WithMany()
+                        .HasForeignKey("MainDishesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Web_api_pizza.Storage.Models.SpecialOfferEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OfferMainDishesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Web_api_pizza.Storage.Models.AddressOrderEntity", b =>
                 {
                     b.HasOne("Web_api_pizza.Storage.Models.AddressEntity", "Address")
@@ -224,6 +321,10 @@ namespace Web_api_pizza.Migrations
                         .HasForeignKey("Web_api_pizza.Storage.Models.AddressOrderEntity", "OrderEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Address");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Web_api_pizza.Storage.Models.CustomerAddressEntity", b =>
@@ -239,6 +340,10 @@ namespace Web_api_pizza.Migrations
                         .HasForeignKey("CustomerEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Address");
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("Web_api_pizza.Storage.Models.CustomerOrderEntity", b =>
@@ -252,12 +357,16 @@ namespace Web_api_pizza.Migrations
                         .HasForeignKey("Web_api_pizza.Storage.Models.CustomerOrderEntity", "OrderEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Web_api_pizza.Storage.Models.OrderDishEntity", b =>
                 {
                     b.HasOne("Web_api_pizza.Storage.Models.DishEntity", "Dish")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("DishEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -267,6 +376,66 @@ namespace Web_api_pizza.Migrations
                         .HasForeignKey("OrderEntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Dish");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.SpecialOfferEntity", b =>
+                {
+                    b.HasOne("Web_api_pizza.Storage.Models.DishEntity", "ExtraDish")
+                        .WithMany("OfferExtraDish")
+                        .HasForeignKey("ExtraDishId");
+
+                    b.Navigation("ExtraDish");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.SpecialOfferOrderEntity", b =>
+                {
+                    b.HasOne("Web_api_pizza.Storage.Models.OrderEntity", "Order")
+                        .WithOne("SpecialOffer")
+                        .HasForeignKey("Web_api_pizza.Storage.Models.SpecialOfferOrderEntity", "OrderEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Web_api_pizza.Storage.Models.SpecialOfferEntity", "SpecialOffer")
+                        .WithMany()
+                        .HasForeignKey("SpecialOfferId");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("SpecialOffer");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.AddressEntity", b =>
+                {
+                    b.Navigation("AddressOrder");
+
+                    b.Navigation("Customers");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.CustomerEntity", b =>
+                {
+                    b.Navigation("Addresses");
+
+                    b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.DishEntity", b =>
+                {
+                    b.Navigation("OfferExtraDish");
+                });
+
+            modelBuilder.Entity("Web_api_pizza.Storage.Models.OrderEntity", b =>
+                {
+                    b.Navigation("AddressOrder");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Products");
+
+                    b.Navigation("SpecialOffer");
                 });
 #pragma warning restore 612, 618
         }
