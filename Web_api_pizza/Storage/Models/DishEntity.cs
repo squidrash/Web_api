@@ -7,8 +7,11 @@ namespace Web_api_pizza.Storage.Models
     public class DishEntity
     {
         public int Id { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Укажите название блюда")]
         public string ProductName { get; set; }
+
+        [Required(ErrorMessage = "Укажите цену блюда")]
         public decimal Price { get; set; }
 
         public string Description { get; set; }

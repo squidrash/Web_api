@@ -6,8 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Web_api_pizza.Services;
 using Web_api_pizza.Storage.DTO;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace Web_api_pizza.Controllers
 {
     [ApiController]
@@ -48,19 +46,19 @@ namespace Web_api_pizza.Controllers
         //Работает
         //протестирован
         [HttpPost("add")]
-        public IActionResult AddToMenu(DishDTO dishes)
+        public IActionResult AddToMenu(DishDTO dish)
         {
             //if (dishes.Price <= 0)
             //{
             //    ModelState.AddModelError("Price", $"Недопустимое значение цены - {dishes.Price}");
             //}
-            if (dishes.Price <= 0)
+            if (dish.Price <= 0)
             {
-                ModelState.AddModelError("Id",$"Недопустимое значение цены - \"{dishes.Price}\"");
+                ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
             }
 
 
-            if (dishes.ProductName == null)
+            if (dish.ProductName == null)
             {
                 ModelState.AddModelError("ProductName", "Укажите блюдо");
             }
@@ -69,35 +67,39 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var dishMess = _menuService.AddToMenu(dishes);
-            return Ok(dishMess);
+            var result = _menuService.AddToMenu(dish);
+            return Ok(result.Message);
         }
 
         
         //работает
         //протестирован
         [HttpPut("edit")]
-        public IActionResult Edit( DishDTO dish)
+        public IActionResult Edit(DishDTO dish)
         {
             if(dish.Id <= 0)
             {
                 ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{dish.Id}\"");
             }
-            if(dish.Price <= 0)
-            {
-                ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
-            }
+            //if(dish.Price <= 0)
+            //{
+            //    ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
+            //}
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
                 
-            var mess = _menuService.EditMenu(dish);
-            if (mess == null)
+            var result = _menuService.EditMenu(dish);
+            if (result == null)
             {
                 return NotFound($"Блюдо не найдено Id - \"{dish.Id}\"");
             }
-            return Ok(mess);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result.Message);
+            }
+            return Ok(result.Message);
         }
 
         // DELETE api/menu/
@@ -109,12 +111,12 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest($"Недопустимое значение Id - \"{id}\"");
             }
-            var mess = _menuService.RemoveFromMenu(id);
-            if(mess == null)
+            var result = _menuService.RemoveFromMenu(id);
+            if(result == null)
             {
                 return NotFound($"Блюдо не найдено Id - \"{id}\"");
             }
-            return Ok(mess);
+            return Ok(result.Message);
             
         }
     }
