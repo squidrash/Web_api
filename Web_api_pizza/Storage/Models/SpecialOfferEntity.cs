@@ -10,19 +10,19 @@ namespace Web_api_pizza.Storage.Models
     {
         public int Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Укажите название Акции")]
         public string Name { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Необходимо описание предложения")]
         [StringLength(300, MinimumLength = 3)]
         public string Description { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Укажите промокод для предложения")]
         public string PromoCode { get; set; }
 
         //тип акции
         //для каждой акции свой подсчет
-        [Required]
+        [Required(ErrorMessage = "Укажите тип предложения")]
         public TypeOfferEnum TypeOffer { get; set; }
 
         //только для акций типа общая скидка

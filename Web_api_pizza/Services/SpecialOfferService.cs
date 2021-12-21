@@ -51,8 +51,7 @@ namespace Web_api_pizza.Services
 
             specialOffers = filter.Filters(specialOffers);
 
-            List<SpecialOfferEntity> specialOffersEntity;
-            specialOffersEntity = specialOffers.ToList();
+            var specialOffersEntity = specialOffers.ToList();
 
             var specialOffersDTO = _mapper.Map<List<SpecialOfferDTO>>(specialOffersEntity);
             return specialOffersDTO;

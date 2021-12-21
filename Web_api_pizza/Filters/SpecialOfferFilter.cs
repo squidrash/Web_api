@@ -15,18 +15,8 @@ namespace Web_api_pizza.Filters
         {
             if (TypeOffer.HasValue)
             {
-                switch(TypeOffer.Value)
-                {
-                    case TypeOfferEnum.ExtraDish:
-                        query = query.Where(x => x.TypeOffer == TypeOfferEnum.ExtraDish);
-                        break;
-                    case TypeOfferEnum.GeneralDiscount:
-                        query = query.Where(x => x.TypeOffer == TypeOfferEnum.GeneralDiscount);
-                        break;
-                    case TypeOfferEnum.ThreeForPriceTwo:
-                        query = query.Where(x => x.TypeOffer == TypeOfferEnum.ThreeForPriceTwo);
-                        break;
-                }
+                var typeOffer = TypeOffer.Value;
+                query = query.Where(x => x.TypeOffer == typeOffer);
             }
             return query;
         }
