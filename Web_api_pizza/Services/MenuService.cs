@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
+using Web_api_pizza.Filters;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Models;
@@ -10,7 +11,7 @@ namespace Web_api_pizza.Services
 {
     public interface IMenuService
     {
-        public List<DishDTO> GetFullMenu();
+        public List<DishDTO> GetFullMenu(DishFilter filter);
         public DishDTO GetOneDish(int id);
         public OperationResult RemoveFromMenu(int id);
         public OperationResult EditMenu(DishDTO dish);
@@ -29,10 +30,15 @@ namespace Web_api_pizza.Services
             _mapper = mapper;
         }
 
-        //работает
-        public List<DishDTO> GetFullMenu()
+        public List<DishDTO> GetFullMenu(DishFilter filter)
         {
-            var menuEntity = _context.Dishes.OrderBy(x => x).ToList();
+            var menu = _context.Dishes
+                .OrderBy(x => x)
+                .AsQueryable();
+
+            menu = filter.Filters(menu);
+            var menuEntity = menu.ToList();
+
             var menuDTO = _mapper.Map<List<DishDTO>>(menuEntity);
 
             return menuDTO;
@@ -76,6 +82,7 @@ namespace Web_api_pizza.Services
             var dishEntity = _context.Dishes
                 .Where(d => d.ProductName == dish.ProductName)
                 .FirstOrDefault();
+
             var result = new OperationResult(false);
             if (dishEntity != null)
             {

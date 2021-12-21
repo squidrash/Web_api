@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Web_api_pizza.Filters;
 using Web_api_pizza.Services;
 using Web_api_pizza.Storage.DTO;
+using Web_api_pizza.Storage.Enums;
 
 namespace Web_api_pizza.Controllers
 {
@@ -16,18 +15,15 @@ namespace Web_api_pizza.Controllers
         public MenuController(IMenuService menuService)
         {
             _menuService = menuService;
-
         }
-        //работает
-        //протестирован
+        
         [HttpGet("fullMenu")]
-        public IActionResult GetMenu()
+        public IActionResult GetMenu([FromQuery] DishFilter filter)
         {
-            var menu = _menuService.GetFullMenu();
+            var menu = _menuService.GetFullMenu(filter);
             return Ok(menu);
         }
-        //работает
-        //протестирован
+        
         [HttpGet("onedish/{id}")]
         public IActionResult GetDish(int id)
         {
@@ -43,18 +39,17 @@ namespace Web_api_pizza.Controllers
                 return Ok(dish);
         }
 
-        //Работает
-        //протестирован
+        
         [HttpPost("add")]
         public IActionResult AddToMenu(DishDTO dish)
         {
-            //if (dishes.Price <= 0)
-            //{
-            //    ModelState.AddModelError("Price", $"Недопустимое значение цены - {dishes.Price}");
-            //}
             if (dish.Price <= 0)
             {
                 ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
+            }
+            if (Enum.IsDefined<DishCategoryEnum>(dish.Category) == false)
+            {
+                ModelState.AddModelError("Category", "Не указана категория блюда");
             }
 
 
@@ -71,9 +66,7 @@ namespace Web_api_pizza.Controllers
             return Ok(result.Message);
         }
 
-        
-        //работает
-        //протестирован
+       
         [HttpPut("edit")]
         public IActionResult Edit(DishDTO dish)
         {
@@ -102,8 +95,7 @@ namespace Web_api_pizza.Controllers
             return Ok(result.Message);
         }
 
-        // DELETE api/menu/
-        //Работает
+      
         [HttpDelete("delete/{id}")]
         public IActionResult Delete(int id)
         {
