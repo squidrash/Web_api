@@ -57,25 +57,6 @@ namespace Web_api_pizza.Controllers
                 return BadRequest(ModelState);
             }
 
-            //var message = _specialOfferService.AddNewSpecialOffer(specialOffer);
-
-            //if(message == "NullMainDishes")
-            //{
-            //    return BadRequest("Список основных блюд не соответствует блюдам из БД");
-            //}
-            //if (message == "NullExtraDish")
-            //{
-            //    return BadRequest("Дополнительное блюдо не соответствует блюдам из БД");
-            //}
-            //if (message == "RequiredNumberOfDish")
-            //{
-            //    return BadRequest($"Недопустимое значение RequiredNumberOfDish - {specialOffer.RequiredNumberOfDish}");
-            //}
-            //if (message == "NumberOfExtraDish")
-            //{
-            //    return BadRequest($"Недопустимое значение NumberOfExtraDish — {specialOffer.NumberOfExtraDish}");
-            //}
-
             var result = _specialOfferService.AddNewSpecialOffer(specialOffer);
             if (result.IsSuccess == false)
             {
@@ -96,10 +77,10 @@ namespace Web_api_pizza.Controllers
             {
                 ModelState.AddModelError("TypeOffer", "Не указан тип акции");
             }
-            //if (specialOffer.Description == null)
-            //{
-            //    ModelState.AddModelError("Description", "Поле Description не может быть пустым");
-            //}
+            if (specialOffer.Description == null)
+            {
+                ModelState.AddModelError("Description", "Поле Description не может быть пустым");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);

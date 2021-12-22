@@ -35,7 +35,7 @@ namespace Web_api_pizza.Services
         {
             var specialOffer = _context.Offers
                 .Where(so => so.Id == id)
-                .Include(so => so.MainDishes)
+                .Include(so => so.MainDish)
                 .Include(so => so.ExtraDish)
                 .FirstOrDefault();
             var specialOfferDTO = _mapper.Map<SpecialOfferDTO>(specialOffer);
@@ -45,7 +45,7 @@ namespace Web_api_pizza.Services
         public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter)
         {
             var specialOffers = _context.Offers
-                .Include(so => so.MainDishes)
+                .Include(so => so.MainDish)
                 .Include(so => so.ExtraDish)
                 .AsQueryable();
 
@@ -56,123 +56,6 @@ namespace Web_api_pizza.Services
             var specialOffersDTO = _mapper.Map<List<SpecialOfferDTO>>(specialOffersEntity);
             return specialOffersDTO;
         }
-
-        //public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
-        //{
-        //    var result = new OperationResult(false);
-
-        //    var specialOfferFromDB = _context.Offers
-        //        .Where(x => x.PromoCode == specialOffer.PromoCode)
-        //        .FirstOrDefault();
-        //    if (specialOfferFromDB != null)
-        //    {
-        //        result.Message = "Акция с таким промокодом уже существует";
-        //        return result;
-        //    }
-        //    var newSpecialOffer = new SpecialOfferEntity()
-        //    {
-        //        Name = specialOffer.Name,
-        //        Description = specialOffer.Description,
-        //        TypeOffer = specialOffer.TypeOffer,
-        //        PromoCode = specialOffer.PromoCode
-        //    };
-
-        //    if (specialOffer.TypeOffer == TypeOfferEnum.GeneralDiscount)
-        //    {
-
-        //        result = ValidateGeneralDiscount(specialOffer);
-        //        if(result.IsSuccess == false)
-        //        {
-        //            return result;
-        //        }
-        //        newSpecialOffer.Discount = specialOffer.Discount;
-        //    }
-        //    else
-        //    {
-        //        //if (specialOffer.MainDishes.Count == 0 )
-        //        //{
-        //        //    message = "NullMainDishes";
-        //        //    return message;
-        //        //}
-
-        //        //if (specialOffer.ExtraDish == null)
-        //        //{
-        //        //    message = "NullExtraDish";
-        //        //    return message;
-        //        //}
-
-        //        //var dishEntity = _context.Dishes
-        //        //    .Where(x => specialOffer.MainDishes.Select(y => y.Id.Value)
-        //        //                      .Contains(x.Id))
-        //        //    .ToList();
-
-
-        //        //if (dishEntity.Count != specialOffer.MainDishes.Count)
-        //        //{
-        //        //    message = "NullMainDishes";
-        //        //    return message;
-        //        //}
-
-        //        //newSpecialOffer.MainDishes = dishEntity;
-
-        //        //var extraDishEntity = _context.Dishes
-        //        //    .Where(x => x.Id == specialOffer.ExtraDish.Id)
-        //        //    .FirstOrDefault();
-        //        //if (extraDishEntity == null)
-        //        //{
-        //        //    message = "NullExtraDish";
-        //        //    return message;
-        //        //}
-        //        //newSpecialOffer.ExtraDish = extraDishEntity;
-
-
-        //        //if (specialOffer.RequiredNumberOfDish <= 2)
-        //        //{
-        //        //    newSpecialOffer.RequiredNumberOfDish = 2;
-        //        //}
-        //        //else
-        //        //{
-        //        //    newSpecialOffer.RequiredNumberOfDish = specialOffer.RequiredNumberOfDish;
-        //        //}
-
-        //        //if (specialOffer.NumberOfExtraDish <= 1)
-        //        //{
-        //        //    newSpecialOffer.NumberOfExtraDish = 1;
-        //        //}
-        //        //else
-        //        //{
-        //        //    newSpecialOffer.NumberOfExtraDish = specialOffer.NumberOfExtraDish;
-        //        //}
-
-        //        //через метод
-        //        //в методе Edit повпоряется эта проверка
-        //        var dishEntity = _context.Dishes
-        //            .Where(x => specialOffer.MainDishes.Select(y => y.Id.Value)
-        //                              .Contains(x.Id))
-        //            .ToList();
-        //        var extraDishEntity = _context.Dishes
-        //        .Where(x => x.Id == specialOffer.ExtraDish.Id)
-        //        .FirstOrDefault();
-
-        //        result = ValidateOffersWithDishes(specialOffer, dishEntity, extraDishEntity);
-
-        //        if(result.IsSuccess == false)
-        //        {
-        //            return result;
-        //        }
-
-        //        newSpecialOffer.MainDishes = dishEntity;
-        //        newSpecialOffer.ExtraDish = extraDishEntity;
-        //        newSpecialOffer.RequiredNumberOfDish = specialOffer.RequiredNumberOfDish;
-        //        newSpecialOffer.NumberOfExtraDish = specialOffer.NumberOfExtraDish;
-        //        //
-        //    }
-
-        //    //_context.Offers.Add(newSpecialOffer);
-        //    //_context.SaveChanges();
-        //    result.Message = "Акция добавлена";
-        //    return result;
-        //}
 
         public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
         {
@@ -202,22 +85,21 @@ namespace Web_api_pizza.Services
             else
             {
                 //в методе Edit повпоряется эта проверка
-                var dishEntity = _context.Dishes
-                    .Where(x => specialOffer.MainDishes.Select(y => y.Id.Value)
-                                      .Contains(x.Id))
-                    .ToList();
+                var mainDishEntity = _context.Dishes
+                    .Where(x => x.Id == specialOffer.MainDish.Id)
+                    .FirstOrDefault();
                 var extraDishEntity = _context.Dishes
                 .Where(x => x.Id == specialOffer.ExtraDish.Id)
                 .FirstOrDefault();
 
-                result = ValidateOffersWithDishes(specialOffer, dishEntity, extraDishEntity);
+                result = ValidateOffersWithDishes(specialOffer, mainDishEntity, extraDishEntity);
 
                 if (result.IsSuccess == false)
                 {
                     return result;
                 }
                 newSpecialOffer = _mapper.Map(specialOffer,newSpecialOffer);
-                newSpecialOffer.MainDishes = dishEntity;
+                newSpecialOffer.MainDishId = mainDishEntity.Id;
                 newSpecialOffer.ExtraDishId = extraDishEntity.Id;
             }
             _context.Offers.Add(newSpecialOffer);
@@ -230,7 +112,7 @@ namespace Web_api_pizza.Services
         {
             var specialOfferEntity = _context.Offers
                 .Where(so => so.Id == specialOffer.Id)
-                .Include(so => so.MainDishes)
+                .Include(so => so.MainDish)
                 .FirstOrDefault();
             if (specialOfferEntity == null)
                 return null;
@@ -247,21 +129,20 @@ namespace Web_api_pizza.Services
             }
             else
             {
-                var dishEntity = _context.Dishes
-                    .Where(x => specialOffer.MainDishes.Select(y => y.Id.Value)
-                                      .Contains(x.Id))
-                    .ToList();
+                var mainDishEntity = _context.Dishes
+                    .Where(x => x.Id == specialOffer.MainDish.Id)
+                    .FirstOrDefault();
                 var extraDishEntity = _context.Dishes
                 .Where(x => x.Id == specialOffer.ExtraDish.Id)
                 .FirstOrDefault();
 
-                result = ValidateOffersWithDishes(specialOffer, dishEntity, extraDishEntity);
+                result = ValidateOffersWithDishes(specialOffer, mainDishEntity, extraDishEntity);
 
                 if (result.IsSuccess == false)
                 {
                     return result;
                 }
-                specialOfferEntity.MainDishes = dishEntity;
+                specialOfferEntity.MainDishId = mainDishEntity.Id;
                 specialOfferEntity.ExtraDishId = extraDishEntity.Id;
             }
 
@@ -300,48 +181,40 @@ namespace Web_api_pizza.Services
                 return result;
             }
 
-            try
+            Console.WriteLine("основное блюдо");
+
+            if (specialOffer.MainDish != null)
             {
-                Console.WriteLine("основные блюда");
-
-                if (specialOffer.MainDishes.Count > 0)
-                {
-                    result.Message = "В Акции типа \"GeneralDiscount\" недолжно быть основных блюд";
-                    return result;
-                }
-
-
-                Console.WriteLine("доп блюда");
-
-                if (specialOffer.ExtraDish != null)
-                {
-                    result.Message = "В Акции типа \"GeneralDiscount\" недолжно быть доп блюд";
-                    return result;
-                }
-
-
-                Console.WriteLine("количество основных");
-
-                if (specialOffer.RequiredNumberOfDish != 0)
-                {
-                    result.Message = "В Акции типа \"GeneralDiscount\" необходимое число блюд должно равняться 0";
-                    return result;
-                }
-
-                Console.WriteLine("количество доп");
-
-                if (specialOffer.NumberOfExtraDish != 0)
-                {
-                    result.Message = "В Акции типа \"GeneralDiscount\" число доп блюд должно равняться 0";
-                    return result;
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                result.Message = e.Message;
+                result.Message = "В Акции типа \"GeneralDiscount\" недолжно быть основных блюд";
                 return result;
             }
+
+
+            Console.WriteLine("доп блюда");
+
+            if (specialOffer.ExtraDish != null)
+            {
+                result.Message = "В Акции типа \"GeneralDiscount\" недолжно быть доп блюд";
+                return result;
+            }
+
+
+            Console.WriteLine("количество основных");
+
+            if (specialOffer.RequiredNumberOfDish != 0)
+            {
+                result.Message = "В Акции типа \"GeneralDiscount\" необходимое число блюд должно равняться 0";
+                return result;
+            }
+
+            Console.WriteLine("количество доп");
+
+            if (specialOffer.NumberOfExtraDish != 0)
+            {
+                result.Message = "В Акции типа \"GeneralDiscount\" число доп блюд должно равняться 0";
+                return result;
+            }
+            
 
             result.IsSuccess = true;
             result.Message = "Успешно";
@@ -349,7 +222,7 @@ namespace Web_api_pizza.Services
             return result;
         }
 
-        private OperationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer, List<DishEntity> mainDishes, DishEntity extraDish)
+        private OperationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer, DishEntity mainDish, DishEntity extraDish)
         {
             var result = new OperationResult(false);
             if(specialOffer.Discount != 0)
@@ -357,7 +230,7 @@ namespace Web_api_pizza.Services
                 result.Message = $"У акции типа {specialOffer.TypeOffer} не должно быть скидки";
                 return result;
             }
-            if (specialOffer.MainDishes.Count == 0 || mainDishes.Count != specialOffer.MainDishes.Count)
+            if (specialOffer.MainDish == null || mainDish == null)
             {
                 result.Message = "Список основных блюд не соответствует блюдам из БД";
                 return result;

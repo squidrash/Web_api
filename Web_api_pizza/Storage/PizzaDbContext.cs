@@ -36,9 +36,9 @@ namespace Web_api_pizza.Storage.DTO
 
 
             modelBuilder.Entity<SpecialOfferEntity>()
-            .HasMany(so => so.MainDishes)
+            .HasOne(so => so.MainDish)
             .WithMany(d => d.OfferMainDishes)
-            .UsingEntity(j => j.ToTable("OfferMainDishesEntity"));
+            .HasForeignKey(so => so.MainDishId);
 
 
         }

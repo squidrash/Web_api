@@ -29,7 +29,7 @@ namespace Web_api_pizza.Storage.DTO
         public int Discount { get; set; }
 
         //блюда участвующие в акции
-        public List<DishDTO> MainDishes { get; set; }
+        public DishDTO MainDish { get; set; }
 
         //число блюд необходимо для акций типа 1+1=3 и блюдо в подарок
         public int RequiredNumberOfDish;
@@ -37,7 +37,6 @@ namespace Web_api_pizza.Storage.DTO
         //число доп блюд по акции "блюдо в подарок"
         public int NumberOfExtraDish;
 
-        
         //доп блюдо
         public DishDTO ExtraDish { get; set; }
     }
