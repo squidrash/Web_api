@@ -25,5 +25,9 @@
     <Folder Include="Storage\Enums\" />
     <Folder Include="Migrations\" />
     <Folder Include="Filters\" />
+    <Folder Include="Services\OrderStrategy\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Services\OrderStrategy\" />
   </ItemGroup>
 </Project>

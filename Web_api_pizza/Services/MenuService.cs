@@ -52,11 +52,11 @@ namespace Web_api_pizza.Services
         public OperationResult RemoveFromMenu(int id)
         {
             var removeDish = _context.Dishes.FirstOrDefault(m => m.Id == id);
-            if(removeDish == null)
+            if(removeDish == null || removeDish.IsActive == false)
             {
                 return null;
             }
-            _context.Dishes.Remove(removeDish);
+            removeDish.IsActive = false;
             _context.SaveChanges();
             var result = new OperationResult(true, "Блюдо удалено");
             return result;
@@ -64,23 +64,27 @@ namespace Web_api_pizza.Services
         }
         public OperationResult EditMenu(DishDTO dish)
         {
-            var editDish = _context.Dishes.FirstOrDefault(d => d.Id == dish.Id);
+            var result = RemoveFromMenu(dish.Id.Value);
 
-            if (editDish == null)
+            if (result == null)
             {
                 return null;
             }
-            editDish = _mapper.Map(dish, editDish);
-            var result = new OperationResult(true, "Блюдо изменено");
 
+            var editableDish = _mapper.Map<DishEntity>(dish);
+            editableDish.Id = 0;
+
+            _context.Dishes.Add(editableDish);
             _context.SaveChanges();
+            result.IsSuccess = true;
+            result.Message = "Блюдо изменено";
             return result;
         }
         public OperationResult AddToMenu(DishDTO dish)
         {
             dish.Id = 0;
             var dishEntity = _context.Dishes
-                .Where(d => d.ProductName == dish.ProductName)
+                .Where(d => d.ProductName == dish.ProductName && d.IsActive == true)
                 .FirstOrDefault();
 
             var result = new OperationResult(false);

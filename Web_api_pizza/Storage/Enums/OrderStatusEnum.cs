@@ -1,7 +1,7 @@
 ﻿using System;
 namespace Web_api_pizza.Storage.Enums
 {
-    public enum StatusEnum
+    public enum OrderStatusEnum
     {
         New = 1,
         Confirmed,

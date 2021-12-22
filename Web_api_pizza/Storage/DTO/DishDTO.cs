@@ -8,6 +8,8 @@ namespace Web_api_pizza.Storage.DTO
     {
         public int? Id { get; set; }
 
+        public bool IsActive { get; set; }
+
         [Required(ErrorMessage = "Укажите название блюда")]
         public string ProductName { get; set; }
 

@@ -14,7 +14,7 @@ namespace Web_api_pizza.Services
     {
         public OrderDTO GetOneOrder(int id);
         public string ChangeOrderStatus(int orderId, string orderStatus);
-        public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0);
+        public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId = 0, int addressId = 0);
         public string RemoveOrder(int id);
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0);
     }
@@ -22,47 +22,47 @@ namespace Web_api_pizza.Services
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        private readonly IMenuService _menuService;
-        private readonly IAddressService _addressService;
+        //private readonly IMenuService _menuService;
+        //private readonly IAddressService _addressService;
         //private readonly ICustomerService _customerService;
         public OrderService(IMapper mapper, PizzaDbContext context,
             IMenuService menuService, IAddressService addressService)
         {
             _mapper = mapper;
             _context = context;
-            _menuService = menuService;
-            _addressService = addressService;
+            //_menuService = menuService;
+            //_addressService = addressService;
             //_customerService = customerService;
         }
 
-        private readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
+        private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
         {
-            {"New", StatusEnum.New },
-            {"Confirmed", StatusEnum.Confirmed },
-            {"Preparing", StatusEnum.Preparing },
-            {"OnTheWay", StatusEnum.OnTheWay},
-            {"Delivered", StatusEnum.Delivered},
-            {"Cancelled", StatusEnum.Cancelled}
+            {"New", OrderStatusEnum.New },
+            {"Confirmed", OrderStatusEnum.Confirmed },
+            {"Preparing", OrderStatusEnum.Preparing },
+            {"OnTheWay", OrderStatusEnum.OnTheWay},
+            {"Delivered", OrderStatusEnum.Delivered},
+            {"Cancelled", OrderStatusEnum.Cancelled}
         };
 
         // поменял когда делал сайт
-        //private readonly Dictionary<string, StatusEnum> OrderStatusesDic = new Dictionary<string, StatusEnum>
+        //private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
         //{
-        //    {"Новый", StatusEnum.New },
-        //    {"Подтвержден", StatusEnum.Confirmed },
-        //    {"Готовится", StatusEnum.Preparing },
-        //    {"В пути", StatusEnum.OnTheWay},
-        //    {"Доставлен", StatusEnum.Delivered},
-        //    {"Отменен", StatusEnum.Cancelled}
+        //    {"Новый", OrderStatusEnum.New },
+        //    {"Подтвержден", OrderStatusEnum.Confirmed },
+        //    {"Готовится", OrderStatusEnum.Preparing },
+        //    {"В пути", OrderStatusEnum.OnTheWay},
+        //    {"Доставлен", OrderStatusEnum.Delivered},
+        //    {"Отменен", OrderStatusEnum.Cancelled}
         //};
-        private readonly Dictionary<StatusEnum,IEnumerable<StatusEnum>> _statusChangeRule = new Dictionary<StatusEnum, IEnumerable<StatusEnum>>
+        private readonly Dictionary<OrderStatusEnum,IEnumerable<OrderStatusEnum>> _statusChangeRule = new Dictionary<OrderStatusEnum, IEnumerable<OrderStatusEnum>>
         {
-            { StatusEnum.New, new[]{ StatusEnum.Confirmed, StatusEnum.Cancelled } },
-            { StatusEnum.Confirmed, new[]{ StatusEnum.Preparing } },
-            { StatusEnum.Preparing, new[]{ StatusEnum.OnTheWay } },
-            { StatusEnum.OnTheWay, new[]{ StatusEnum.Delivered } },
-            { StatusEnum.Delivered, new StatusEnum[] { } },
-            { StatusEnum.Cancelled, new StatusEnum[] { } },
+            { OrderStatusEnum.New, new[]{ OrderStatusEnum.Confirmed, OrderStatusEnum.Cancelled } },
+            { OrderStatusEnum.Confirmed, new[]{ OrderStatusEnum.Preparing } },
+            { OrderStatusEnum.Preparing, new[]{ OrderStatusEnum.OnTheWay } },
+            { OrderStatusEnum.OnTheWay, new[]{ OrderStatusEnum.Delivered } },
+            { OrderStatusEnum.Delivered, new OrderStatusEnum[] { } },
+            { OrderStatusEnum.Cancelled, new OrderStatusEnum[] { } },
         };
         // поменял когда делал сайт
         //private readonly List<string> StatusList = new List<string>()
@@ -238,31 +238,27 @@ namespace Web_api_pizza.Services
                 message = "BadStatus";
                 return message;
             }
-            //var checkStatus = CheckStatus(changeStatus.Status, orderStatus);
-            //if(checkStatus)
-            //{
-            //    changeStatus.Status = OrderStatusesDic[orderStatus];
-            //    _context.SaveChanges();
-            //    message = "Статус изменен";
-            //    return message;
-            //}
-            //else
-            //{
-            //    message = "BadStatus";
-            //    return message;
-            //}
         }
 
         //новый
-        public string CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
+        public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
         {
             string message = null;
+
+            var specialOffer = _context.Offers
+                .Where(x => x.PromoCode == promoCode)
+                .FirstOrDefault();
+            if(specialOffer == null)
+            {
+                return null;
+            }
+
+
             var order = CreateOrderDishes(dishes);
             if(order == null)
             {
                 message = "NullMenu";
                 return message;
-                
             }
 
             if(customerId != 0)
@@ -353,7 +349,7 @@ namespace Web_api_pizza.Services
 
             var order = new OrderEntity() {
                 CreatTime = DateTime.Now,
-                Status = StatusEnum.New
+                Status = OrderStatusEnum.New
             };
             _context.Orders.Add(order);
             _context.SaveChanges();
@@ -425,7 +421,7 @@ namespace Web_api_pizza.Services
         private string CreateAddressOrder(int orderId, int addressId)
         {
             string message;
-            var findAddress = _addressService.GetDeliveryAddress(addressId);
+            var findAddress = _context.Addresses.FirstOrDefault(a => a.Id == addressId);
             if(findAddress == null)
             {
                 message = null;

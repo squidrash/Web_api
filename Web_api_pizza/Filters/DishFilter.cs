@@ -8,15 +8,21 @@ namespace Web_api_pizza.Filters
 {
     public class DishFilter
     {
-        [FromQuery(Name ="Category")]
+        [FromQuery(Name = "IsActive")]
+        public bool? IsActive { get; set; }
+
+        [FromQuery(Name = "Category")]
         public DishCategoryEnum? Category { get; set; }
 
         public IQueryable<DishEntity> Filters (IQueryable<DishEntity> query)
         {
+            if(IsActive.HasValue)
+            {
+                query = query.Where(x => x.IsActive == IsActive.Value);
+            }
             if (Category.HasValue)
             {
-                var dishCategory = Category.Value;
-                query = query.Where(x => x.Category == dishCategory);
+                query = query.Where(x => x.Category == Category.Value);
             }
 
             return query;

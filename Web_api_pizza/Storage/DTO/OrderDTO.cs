@@ -10,7 +10,7 @@ namespace Web_api_pizza.Storage.DTO
         
         public CustomerDTO Client { get; set; }
         public DateTime CreatTime { get; set; }
-        public StatusEnum Status { get; set; }
+        public OrderStatusEnum Status { get; set; }
         public decimal TotalSum { get; set; }
 
         public AddressDTO Address { get; set; }
