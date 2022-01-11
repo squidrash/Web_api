@@ -4,6 +4,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
+using Web_api_pizza.SpecialOfferStrategy;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
@@ -17,6 +18,7 @@ namespace Web_api_pizza.Services
         public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter);
         public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
         public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
+        public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
         public string DeleteSpecialOffer(int specialOfferId);
     }
 
@@ -169,6 +171,39 @@ namespace Web_api_pizza.Services
 
             message = "Акция удалена";
             return message;
+        }
+        public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
+        {
+            var result = new OperationResult(false);
+            var successMessage = "промокод применен";
+            var specialOfferFromDB = _context.Offers
+                .FirstOrDefault(x => x.PromoCode == promoCode);
+            if (specialOfferFromDB == null)
+            {
+                result.Message = "Акции с таким промокодом не существует";
+                return result;
+            }
+            var complianceContext = new ComplianceContext();
+            switch (specialOfferFromDB.TypeOffer)
+            {
+                case TypeOfferEnum.GeneralDiscount:
+                    complianceContext.SetStrategy(new GeneralDiscountStrategy());
+                    break;
+                case TypeOfferEnum.ExtraDish:
+                    complianceContext.SetStrategy(new ExtraDishStrategy());
+                    break;
+                case TypeOfferEnum.ThreeForPriceTwo:
+                    complianceContext.SetStrategy(new ThreeForPriceTwoStrategy());
+                    break;
+            }
+            result.IsSuccess = complianceContext.DoSomeBusinessLogic(dishes, specialOfferFromDB);
+            if (result.IsSuccess == false)
+            {
+                result.Message = "Не соответствует условиям акции";
+                return result;
+            }
+            result.Message = successMessage;
+            return result;
         }
 
         private OperationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)

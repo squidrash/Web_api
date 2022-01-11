@@ -4,6 +4,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
+using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
 using Web_api_pizza.Storage.Models;
@@ -22,17 +23,12 @@ namespace Web_api_pizza.Services
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        //private readonly IMenuService _menuService;
-        //private readonly IAddressService _addressService;
-        //private readonly ICustomerService _customerService;
-        public OrderService(IMapper mapper, PizzaDbContext context,
-            IMenuService menuService, IAddressService addressService)
+        private readonly SpecialOfferService _offer;
+        public OrderService(IMapper mapper, PizzaDbContext context, SpecialOfferService offer)
         {
             _mapper = mapper;
             _context = context;
-            //_menuService = menuService;
-            //_addressService = addressService;
-            //_customerService = customerService;
+            _offer = offer;
         }
 
         private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
@@ -73,53 +69,6 @@ namespace Web_api_pizza.Services
         {
             "New","Confirmed","Preparing","OnTheWay","Delivered","Cancelled"
         };
-
-        //public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
-        //{
-        //    var orders = _context.Orders
-        //        .Include(o => o.Products)
-        //        .ThenInclude(p => p.Dish)
-        //        .Include(o => o.AddressOrder)
-        //        .ThenInclude(a => a.Address)
-        //        .AsQueryable();
-
-        //    if (customerId != 0)
-        //        orders = orders.Where(x => x.CustomerEntityId == customerId);
-
-        //    orders = filter.Filters(orders);
-
-
-        //    List<OrderEntity> ordersEntity;
-        //    ordersEntity = orders.OrderByDescending(o => o.CreatTime).ToList();
-
-        //    Console.WriteLine("Это объект из базы");
-        //    foreach (var o in ordersEntity)
-        //    {
-        //        Console.WriteLine($"продукты заказа {o.Id}");
-        //        foreach (var p in o.Products)
-        //        {
-        //            Console.WriteLine(p.Dish.ProductName);
-        //            Console.WriteLine(p.Dish.Price);
-        //        }
-        //        Console.WriteLine("адрес");
-
-        //        if (o.AddressOrder != null)
-        //        {
-        //            Console.WriteLine(o.AddressOrder.Address.City);
-        //        }
-
-        //    }
-
-        //    var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
-
-        //    //var ordersDTO = new List<OrderDTO>();
-        //    //foreach (var o in ordersEntity)
-        //    //{
-        //    //    var order = GetOneOrder(o.Id);
-        //    //    ordersDTO.Add(order);
-        //    //}
-        //    return ordersDTO;
-        //}
 
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)
         {
@@ -171,31 +120,6 @@ namespace Web_api_pizza.Services
             return ordersDTO;
         }
 
-
-        //нужен ли этот  метод вообще?
-        //public OrderDTO GetOneOrder(int id)
-        //{
-        //    var orderEntity = _context.Orders.
-        //        Where(o => o.Id == id)
-        //        .Include(o => o.Products)
-        //        .Include(o => o.AddressOrder)
-        //        .FirstOrDefault();
-        //    var getListDishes = GetListDishes(orderEntity);
-        //    var order = getListDishes;
-
-        //    if (orderEntity.AddressOrder != null)
-        //    {
-        //        var getOrderAddress = GetOrderAddress(orderEntity.AddressOrder.AddressEntityId);
-        //        order.Address = getOrderAddress;
-        //    }
-        //    if (orderEntity.CustomerEntityId != null)
-        //    {
-        //        var getCustomerOrder = GetCustomerOrder((int)orderEntity.CustomerEntityId);
-        //        order.Client = getCustomerOrder;
-        //    }
-        //    return order;
-        //}
-
         public OrderDTO GetOneOrder(int id)
         {
             var orderEntity = _context.Orders.
@@ -241,46 +165,98 @@ namespace Web_api_pizza.Services
         }
 
         //новый
+        //public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
+        //{
+        //    string message = null;
+
+        //    if(promoCode != null)
+        //    {
+        //        var specialOffer = _context.Offers
+        //        .Where(x => x.PromoCode == promoCode)
+        //        .FirstOrDefault();
+        //        if (specialOffer == null)
+        //        {
+        //            return null;
+        //        }
+        //        if (specialOffer.TypeOffer == TypeOfferEnum.GeneralDiscount)
+        //        {
+
+        //        }
+        //        else
+        //        {
+
+        //        }
+        //    }
+        //    else
+        //    {
+                
+        //    }
+
+        //    var order = CreateOrderDishes(dishes);
+        //    if(order == null)
+        //    {
+        //        message = "NullMenu";
+        //        return message;
+        //    }
+
+        //    if(customerId != 0)
+        //    {
+        //        var customerOrder = CreateOrderCustomer(order, customerId);
+        //        if (customerOrder == null)
+        //        {
+        //            message = "NullCustomer";
+        //            return message;
+        //        }
+        //    }
+
+        //    if (addressId != 0)
+        //    {
+        //        var addressOrder = CreateAddressOrder(order.Id, addressId);
+        //        if (addressOrder == null)
+        //        {
+        //            RemoveOrder(order.Id);
+        //            message = "NullAddress";
+        //            return message;
+        //        }
+        //    }
+        //    message = "Заказ создан";
+        //    return message;
+        //}
+
         public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
         {
             string message = null;
 
-            var specialOffer = _context.Offers
-                .Where(x => x.PromoCode == promoCode)
-                .FirstOrDefault();
-            if(specialOffer == null)
+            var resultValidation = OrderValidate(dishes, promoCode, customerId, addressId);
+            if(resultValidation.IsSuccess == false)
             {
-                return null;
+                return resultValidation.Message;
             }
-
 
             var order = CreateOrderDishes(dishes);
-            if(order == null)
-            {
-                message = "NullMenu";
-                return message;
-            }
 
-            if(customerId != 0)
+            //if (promoCode != null)
+            //{
+            //    ApplyDiscount(order, promoCode);
+            //}
+
+            if (customerId != 0)
             {
-                var customerOrder = CreateOrderCustomer(order, customerId);
-                if (customerOrder == null)
+                var customerOrder = new CustomerOrderEntity
                 {
-                    message = "NullCustomer";
-                    return message;
-                }
+                    CustomerEntityId = customerId,
+                    OrderEntityId = order.Id
+                };
+                _context.CustomerOrderEntities.Add(customerOrder);
             }
-
             if (addressId != 0)
             {
-                var addressOrder = CreateAddressOrder(order.Id, addressId);
-                if (addressOrder == null)
-                {
-                    RemoveOrder(order.Id);
-                    message = "NullAddress";
-                    return message;
-                }
+                var addressOrder = new AddressOrderEntity { OrderEntityId = order.Id, AddressEntityId = addressId };
+                _context.AddressOrderEntities.Add(addressOrder);
             }
+
+            _context.SaveChanges();
+
             message = "Заказ создан";
             return message;
         }
@@ -304,40 +280,9 @@ namespace Web_api_pizza.Services
             }
         }
 
-        //private OrderDTO GetListDishes(OrderEntity order)
-        //{
-        //    var orderDTO = _mapper.Map<OrderEntity, OrderDTO>(order);
-        //    var dishesList = new List<DishDTO>();
-        //    foreach (var d in order.Products)
-        //    {
-        //        var dishDTO = _menuService.GetOneDish(d.DishEntityId);
-        //        dishDTO.Quantity = d.Quantity;
-        //        dishesList.Add(dishDTO);
-        //    }
-        //    orderDTO.Dishes = dishesList;
-        //    return orderDTO;
-        //}
-        //private AddressDTO GetOrderAddress(int addressId)
-        //{
-        //    var address = _addressService.GetDeliveryAddress(addressId);
-
-        //    return address;
-        //}
-        
-        //private PersonDTO GetCustomerOrder(int clientId)
-        //{
-        //    var customerEntity = _context.Customers.FirstOrDefault(c => c.Id == clientId);
-        //    var personDTO = _mapper.Map<CustomerEntity, PersonDTO>(customerEntity);
-        //    return personDTO;
-        //}
-
-        
-
-        private OrderEntity CreateOrderDishes(List<DishDTO> dishes)
+        private OperationResult OrderValidate(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
         {
-
-            //validate
-            
+            var result = new OperationResult(false);
 
             var dishEntity = _context.Dishes
                 .Where(x => dishes.Select(y => y.Id.Value)
@@ -345,7 +290,53 @@ namespace Web_api_pizza.Services
                 .ToList();
 
             if (dishEntity.Count != dishes.Count)
-                return null;
+            {
+                result.Message = "Блюда не соответствуют БД";
+                return result;
+            }
+
+            if (promoCode != null)
+            {
+                var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promoCode);
+                if (checkOfferResult.IsSuccess == false)
+                {
+                    result.Message = checkOfferResult.Message;
+                    return result;
+                }
+            }
+
+
+            if (customerId != 0)
+            {
+                var customer = _context.Customers.FirstOrDefault(c => c.Id == customerId);
+                if (customer == null)
+                {
+                    result.Message = "Пользователь не найден";
+                    return result;
+                }
+            }
+
+            if (addressId != 0)
+            {
+                var address = _context.Addresses.FirstOrDefault(a => a.Id == addressId);
+                if (address == null)
+                {
+                    result.Message = "Адрес не найден";
+                    return result;
+                }
+            }
+
+            result.IsSuccess = true;
+            result.Message = "Успешно";
+            return result;
+        }
+
+        private OrderEntity CreateOrderDishes(List<DishDTO> dishes)
+        {
+            var dishEntity = _context.Dishes
+                .Where(x => dishes.Select(y => y.Id.Value)
+                                  .Contains(x.Id))
+                .ToList();
 
             var order = new OrderEntity() {
                 CreatTime = DateTime.Now,
@@ -375,63 +366,26 @@ namespace Web_api_pizza.Services
             order.TotalSum = total;
             _context.SaveChanges();
 
-
-            /*  decimal totalSum = 0;
-              foreach(var d in dishes)
-              {
-                  var findDish = _menuService.GetOneDish(d.Id.Value);
-                  if (findDish == null)
-                  {
-                      RemoveOrder(orderFromDb.Id);
-                      return null;
-                  }
-                  if (d.Quantity <= 0)
-                  {
-                      d.Quantity = 1;
-                  }
-                  totalSum += findDish.Price * d.Quantity;
-
-                  //можно ли это действие сделать один раз?
-                  var orderDish = new OrderDishEntity { OrderEntityId = orderFromDb.Id, DishEntityId = (int)d.Id, Quantity = d.Quantity };
-                  _context.OrderDishEntities.Add(orderDish);
-                  _context.SaveChanges();
-              }
-            */
-
             return order;
         }
-        private string CreateOrderCustomer(OrderEntity order, int customerId)
-        {
-            string message;
-            var findCustomer = _context.Customers.FirstOrDefault(c => c.Id == customerId);
-            if (findCustomer == null)
-            {
-                message = null;
-                return message;
-                
-            }
-            //order.Customer.CustomerEntityId = customerId;
-            var customerOrder = new CustomerOrderEntity { CustomerEntityId = customerId, OrderEntityId = order.Id };
-            _context.CustomerOrderEntities.Add(customerOrder);
-            _context.SaveChanges();
-            message = "связь создана";
-            return message;
-        }
+        //private void ApplyDiscount(OrderEntity order, string promoCode)
+        //{
+        //    var specialOffer = _context.Offers.FirstOrDefault(x => x.PromoCode == promoCode);
 
-        private string CreateAddressOrder(int orderId, int addressId)
-        {
-            string message;
-            var findAddress = _context.Addresses.FirstOrDefault(a => a.Id == addressId);
-            if(findAddress == null)
-            {
-                message = null;
-                return message;
-            }
-            var addressOrder = new AddressOrderEntity { OrderEntityId = orderId, AddressEntityId = addressId };
-            _context.AddressOrderEntities.Add(addressOrder);
-            _context.SaveChanges();
-            message = "связь создана";
-            return message;
-        }
+        //    switch(specialOffer.TypeOffer)
+        //    {
+        //        case TypeOfferEnum.GeneralDiscount:
+        //        {
+        //            order.DiscountSum = order.TotalSum * specialOffer.Discount / 100;
+        //            order.TotalSum -= order.DiscountSum;
+        //            break;
+        //        };
+        //        case TypeOfferEnum.ExtraDish:
+        //        {
+                    
+        //            break;
+        //        }
+        //    }
+        //}
     }
 }

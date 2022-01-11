@@ -13,6 +13,7 @@ namespace Web_api_pizza.Storage.Models
         public DateTime CreatTime { get; set; }
         public OrderStatusEnum Status { get; set; }
         public decimal TotalSum { get; set; }
+        public decimal DiscountSum { get; set; }
 
         public AddressOrderEntity AddressOrder { get; set; }
         public CustomerOrderEntity Customer { get; set; }

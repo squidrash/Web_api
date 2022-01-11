@@ -25,9 +25,16 @@
     <Folder Include="Storage\Enums\" />
     <Folder Include="Migrations\" />
     <Folder Include="Filters\" />
-    <Folder Include="Services\OrderStrategy\" />
+    <Folder Include="SpecialOfferStrategy\" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Services\OrderStrategy\" />
+    <None Remove="Services\OrderTemolates\" />
+    <None Remove="SpecialOfferStrategy\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Services\OrderStrategy\OrderContext.cs" />
+    <Compile Remove="Services\OrderStrategy\IOrderStrategy.cs" />
+    <Compile Remove="Services\OrderStrategy\OrderStandartStrategy.cs" />
+    <Compile Remove="Services\OrderStrategy\OrderExtraDishStrategy.cs" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Web_api_pizza.Filters;
 using Web_api_pizza.Services;
@@ -114,6 +115,13 @@ namespace Web_api_pizza.Controllers
                 return NotFound("Акция не найдена");
             }
             return Ok(message);
+        }
+        [HttpGet("checkOffer")]
+        public IActionResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
+        {
+
+            var result = _specialOfferService.CheckComplianceSpecialOffer(dishes, promoCode);
+            return Ok(result);
         }
     }
 }
