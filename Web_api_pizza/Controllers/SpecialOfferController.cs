@@ -119,9 +119,24 @@ namespace Web_api_pizza.Controllers
         [HttpGet("checkOffer")]
         public IActionResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
-
+            if (promoCode == null)
+            {
+                ModelState.AddModelError("PromoCode", $"Не указан промокод");
+            }
+            if (dishes == null)
+            {
+                ModelState.AddModelError("Dishes", $"Не указаны блюда для проверки соответствия акции");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var result = _specialOfferService.CheckComplianceSpecialOffer(dishes, promoCode);
-            return Ok(result);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result.Message);
+            }
+            return Ok(result.Message);
         }
     }
 }

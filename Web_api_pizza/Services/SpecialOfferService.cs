@@ -44,6 +44,7 @@ namespace Web_api_pizza.Services
             return specialOfferDTO;
 
         }
+
         public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter)
         {
             var specialOffers = _context.Offers
@@ -63,10 +64,10 @@ namespace Web_api_pizza.Services
         {
             var result = new OperationResult(false);
 
-            var specialOfferFromDB = _context.Offers
+            var specialOfferEntity = _context.Offers
                 .Where(x => x.PromoCode == specialOffer.PromoCode)
                 .FirstOrDefault();
-            if (specialOfferFromDB != null)
+            if (specialOfferEntity != null)
             {
                 result.Message = "Акция с таким промокодом уже существует";
                 return result;
@@ -82,7 +83,6 @@ namespace Web_api_pizza.Services
                 {
                     return result;
                 }
-                newSpecialOffer = _mapper.Map(specialOffer, newSpecialOffer);
             }
             else
             {
@@ -94,16 +94,16 @@ namespace Web_api_pizza.Services
                 .Where(x => x.Id == specialOffer.ExtraDish.Id)
                 .FirstOrDefault();
 
-                result = ValidateOffersWithDishes(specialOffer, mainDishEntity, extraDishEntity);
+                result = ValidateOffersWithDishes(specialOffer);
 
                 if (result.IsSuccess == false)
                 {
                     return result;
                 }
-                newSpecialOffer = _mapper.Map(specialOffer,newSpecialOffer);
-                newSpecialOffer.MainDishId = mainDishEntity.Id;
-                newSpecialOffer.ExtraDishId = extraDishEntity.Id;
+                newSpecialOffer.MainDishId = specialOffer.MainDish.Id;
+                newSpecialOffer.ExtraDishId = specialOffer.ExtraDish.Id;
             }
+            newSpecialOffer = _mapper.Map(specialOffer, newSpecialOffer);
             _context.Offers.Add(newSpecialOffer);
             _context.SaveChanges();
             result.Message = "Акция добавлена";
@@ -114,7 +114,6 @@ namespace Web_api_pizza.Services
         {
             var specialOfferEntity = _context.Offers
                 .Where(so => so.Id == specialOffer.Id)
-                .Include(so => so.MainDish)
                 .FirstOrDefault();
             if (specialOfferEntity == null)
                 return null;
@@ -131,21 +130,14 @@ namespace Web_api_pizza.Services
             }
             else
             {
-                var mainDishEntity = _context.Dishes
-                    .Where(x => x.Id == specialOffer.MainDish.Id)
-                    .FirstOrDefault();
-                var extraDishEntity = _context.Dishes
-                .Where(x => x.Id == specialOffer.ExtraDish.Id)
-                .FirstOrDefault();
-
-                result = ValidateOffersWithDishes(specialOffer, mainDishEntity, extraDishEntity);
+                result = ValidateOffersWithDishes(specialOffer);
 
                 if (result.IsSuccess == false)
                 {
                     return result;
                 }
-                specialOfferEntity.MainDishId = mainDishEntity.Id;
-                specialOfferEntity.ExtraDishId = extraDishEntity.Id;
+                specialOfferEntity.MainDishId = specialOffer.MainDish.Id;
+                specialOfferEntity.ExtraDishId = specialOffer.ExtraDish.Id;
             }
 
             specialOfferEntity = _mapper.Map(specialOffer, specialOfferEntity);
@@ -172,19 +164,20 @@ namespace Web_api_pizza.Services
             message = "Акция удалена";
             return message;
         }
+
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
             var result = new OperationResult(false);
-            var successMessage = "промокод применен";
-            var specialOfferFromDB = _context.Offers
+            var specialOfferEntity = _context.Offers
                 .FirstOrDefault(x => x.PromoCode == promoCode);
-            if (specialOfferFromDB == null)
+            if (specialOfferEntity == null)
             {
                 result.Message = "Акции с таким промокодом не существует";
                 return result;
             }
             var complianceContext = new ComplianceContext();
-            switch (specialOfferFromDB.TypeOffer)
+
+            switch (specialOfferEntity.TypeOffer)
             {
                 case TypeOfferEnum.GeneralDiscount:
                     complianceContext.SetStrategy(new GeneralDiscountStrategy());
@@ -196,13 +189,13 @@ namespace Web_api_pizza.Services
                     complianceContext.SetStrategy(new ThreeForPriceTwoStrategy());
                     break;
             }
-            result.IsSuccess = complianceContext.DoSomeBusinessLogic(dishes, specialOfferFromDB);
+            result.IsSuccess = complianceContext.DoSomeBusinessLogic(dishes, specialOfferEntity);
             if (result.IsSuccess == false)
             {
                 result.Message = "Не соответствует условиям акции";
                 return result;
             }
-            result.Message = successMessage;
+            result.Message = "промокод применен";
             return result;
         }
 
@@ -213,6 +206,13 @@ namespace Web_api_pizza.Services
             if (specialOffer.Discount < 5 || specialOffer.Discount > 20)
             {
                 result.Message = $"Недопустимый размер скидки — \"{specialOffer.Discount}%\"";
+                return result;
+            }
+
+            Console.WriteLine("минимальная сумма");
+            if(specialOffer.MinOrderAmount <= 0)
+            {
+                result.Message = $"Не указана минимальная сумма заказа";
                 return result;
             }
 
@@ -257,24 +257,48 @@ namespace Web_api_pizza.Services
             return result;
         }
 
-        private OperationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer, DishEntity mainDish, DishEntity extraDish)
+        private OperationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer)
         {
+            var mainDish = _context.Dishes
+                    .Where(x => x.Id == specialOffer.MainDish.Id)
+                    .FirstOrDefault();
+            var extraDish = _context.Dishes
+                    .Where(x => x.Id == specialOffer.ExtraDish.Id)
+                    .FirstOrDefault();
             var result = new OperationResult(false);
             if(specialOffer.Discount != 0)
             {
-                result.Message = $"У акции типа {specialOffer.TypeOffer} не должно быть скидки";
+                result.Message = $"Для акции типа {specialOffer.TypeOffer} не должно быть скидки";
                 return result;
             }
+
+            if(specialOffer.MinOrderAmount != 0)
+            {
+                result.Message = $"Для акции типа {specialOffer.TypeOffer} не должно быть указана минимальная сумма";
+                return result;
+            }
+
             if (specialOffer.MainDish == null || mainDish == null)
             {
                 result.Message = "Список основных блюд не соответствует блюдам из БД";
                 return result;
             }
 
-            if (specialOffer.ExtraDish == null || extraDish == null)
+            if(specialOffer.TypeOffer == TypeOfferEnum.ThreeForPriceTwo)
             {
-                result.Message = "Дополнительное блюдо не соответствует блюдам из БД";
-                return result;
+                if(specialOffer.MainDish.Id != specialOffer.ExtraDish.Id)
+                {
+                    result.Message = $"Для акции типа {specialOffer.TypeOffer} основное и доп блюдо должны быть одинаковыми";
+                    return result;
+                }
+            }
+            else
+            {
+                if (specialOffer.ExtraDish == null || extraDish == null)
+                {
+                    result.Message = "Дополнительное блюдо не соответствует блюдам из БД";
+                    return result;
+                }
             }
 
             if (specialOffer.RequiredNumberOfDish < 2 || specialOffer.RequiredNumberOfDish > 10)

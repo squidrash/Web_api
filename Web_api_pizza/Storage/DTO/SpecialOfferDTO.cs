@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using AutoMapper;
 using Web_api_pizza.Storage.Enums;
 
 namespace Web_api_pizza.Storage.DTO
@@ -39,5 +38,8 @@ namespace Web_api_pizza.Storage.DTO
 
         //доп блюдо
         public DishDTO ExtraDish { get; set; }
+
+        //минимальная сумма заказа для акции типа GeneralDiscount
+        public decimal MinOrderAmount { get; set; }
     }
 }

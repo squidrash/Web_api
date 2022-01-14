@@ -42,7 +42,8 @@ namespace Web_api_pizza.Storage.Models
         [IgnoreMap]
         public DishEntity ExtraDish { get; set; }
 
-
+        //минимальная сумма заказа для акции типа GeneralDiscount
+        public decimal MinOrderAmount { get; set; }
 
 
     }

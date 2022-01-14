@@ -23,8 +23,8 @@ namespace Web_api_pizza.Services
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
-        private readonly SpecialOfferService _offer;
-        public OrderService(IMapper mapper, PizzaDbContext context, SpecialOfferService offer)
+        private readonly ISpecialOfferService _offer;
+        public OrderService(IMapper mapper, PizzaDbContext context, ISpecialOfferService offer)
         {
             _mapper = mapper;
             _context = context;
@@ -84,7 +84,6 @@ namespace Web_api_pizza.Services
             if (customerId != 0)
             {
                 orders = orders.Where(x => x.Customer.CustomerEntityId == customerId);
-                
             }
 
             orders = filter.Filters(orders);
@@ -225,8 +224,6 @@ namespace Web_api_pizza.Services
 
         public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
         {
-            string message = null;
-
             var resultValidation = OrderValidate(dishes, promoCode, customerId, addressId);
             if(resultValidation.IsSuccess == false)
             {
@@ -235,10 +232,10 @@ namespace Web_api_pizza.Services
 
             var order = CreateOrderDishes(dishes);
 
-            //if (promoCode != null)
-            //{
-            //    ApplyDiscount(order, promoCode);
-            //}
+            if (promoCode != null)
+            {
+                ApplyDiscount(order, promoCode);
+            }
 
             if (customerId != 0)
             {
@@ -257,7 +254,7 @@ namespace Web_api_pizza.Services
 
             _context.SaveChanges();
 
-            message = "Заказ создан";
+            string message = "Заказ создан";
             return message;
         }
 
@@ -368,24 +365,49 @@ namespace Web_api_pizza.Services
 
             return order;
         }
-        //private void ApplyDiscount(OrderEntity order, string promoCode)
-        //{
-        //    var specialOffer = _context.Offers.FirstOrDefault(x => x.PromoCode == promoCode);
 
-        //    switch(specialOffer.TypeOffer)
-        //    {
-        //        case TypeOfferEnum.GeneralDiscount:
-        //        {
-        //            order.DiscountSum = order.TotalSum * specialOffer.Discount / 100;
-        //            order.TotalSum -= order.DiscountSum;
-        //            break;
-        //        };
-        //        case TypeOfferEnum.ExtraDish:
-        //        {
-                    
-        //            break;
-        //        }
-        //    }
-        //}
+        private void ApplyDiscount(OrderEntity order, string promoCode)
+        {
+            var specialOffer = _context.Offers.FirstOrDefault(x => x.PromoCode == promoCode);
+
+            switch (specialOffer.TypeOffer)
+            {
+                case TypeOfferEnum.GeneralDiscount:
+                    {
+                        order.DiscountSum = order.TotalSum * specialOffer.Discount / 100;
+                        order.TotalSum -= order.DiscountSum;
+                        break;
+                    };
+                case TypeOfferEnum.ExtraDish:
+                    {
+                        var extraDish = _context.Dishes
+                            .Where(x => x.Id == specialOffer.ExtraDishId)
+                            .Select( x => new
+                            {
+                                x.Price,
+                                Quantity = specialOffer.NumberOfExtraDish
+                            })
+                            .FirstOrDefault();
+                        order.DiscountSum = extraDish.Price * extraDish.Quantity;
+                        order.TotalSum -= order.DiscountSum;
+                        break;
+                    };
+                case TypeOfferEnum.ThreeForPriceTwo:
+                    {
+                        var extraDish = _context.Dishes
+                            .Where(x => x.Id == specialOffer.MainDishId)
+                            .Select(x => new
+                            {
+                                x.Price,
+                                Quantity = specialOffer.NumberOfExtraDish
+                            })
+                            .FirstOrDefault();
+                        order.DiscountSum = extraDish.Price * extraDish.Quantity;
+                        order.TotalSum -= order.DiscountSum;
+                        break;
+                    }
+            }
+            _context.SaveChanges();
+        }
     }
 }
