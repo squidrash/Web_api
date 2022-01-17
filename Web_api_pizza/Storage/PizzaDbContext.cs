@@ -14,12 +14,12 @@ namespace Web_api_pizza.Storage.DTO
         public DbSet<OrderDishEntity> OrderDishEntities { get; set; }
 
         public DbSet<DishEntity> Dishes { get; set; }
+        public DbSet<DishCategoryEntity> Categories { get; set; }
 
         public DbSet<AddressEntity> Addresses { get; set; }
         public DbSet<AddressOrderEntity> AddressOrderEntities { get; set; }
 
         public DbSet<SpecialOfferEntity> Offers { get; set; }
-        public DbSet<SpecialOfferOrderEntity> SpecialOfferOrderEntities { get; set; }
 
 
         public PizzaDbContext(DbContextOptions<PizzaDbContext> options)
@@ -40,7 +40,10 @@ namespace Web_api_pizza.Storage.DTO
             .WithMany(d => d.OfferMainDishes)
             .HasForeignKey(so => so.MainDishId);
 
-
+            modelBuilder.Entity<DishEntity>()
+            .HasOne(d => d.Category)
+            .WithMany(c => c.Dishes)
+            .HasForeignKey(d => d.CategoryId);
         }
     }
 }

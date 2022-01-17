@@ -20,10 +20,10 @@ namespace Web_api_pizza.Filters
             {
                 query = query.Where(x => x.IsActive == IsActive.Value);
             }
-            if (Category.HasValue)
-            {
-                query = query.Where(x => x.Category == Category.Value);
-            }
+            //if (Category.HasValue)
+            //{
+            //    query = query.Where(x => x.Category == Category.Value);
+            //}
 
             return query;
         }

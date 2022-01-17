@@ -76,10 +76,13 @@ namespace Web_api_pizza
             CreateMap<AddressEntity, AddressDTO>();
             CreateMap<AddressDTO, AddressEntity>();
 
-            CreateMap<DishEntity, DishDTO>() ;
+            CreateMap<DishEntity, DishDTO>();
             CreateMap<DishDTO, DishEntity>();
             //.ForMember(src => src.OfferMainDishes, opt => opt.Ignore())
             //.ForMember(src => src.OfferExtraDish, opt => opt.Ignore());
+
+            CreateMap<DishCategoryEntity, DishCategoryDTO>();
+            CreateMap<DishCategoryDTO, DishCategoryEntity>();
 
             CreateMap<SpecialOfferEntity, SpecialOfferDTO>();
                 //.ForMember(src => src.MainDishes, opt => opt.Ignore())

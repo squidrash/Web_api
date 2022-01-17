@@ -51,6 +51,7 @@ namespace Web_api_pizza
             services.AddTransient<ICustomerService, CustomerService>();
             services.AddTransient<IOrderService, OrderService>();
             services.AddTransient<ISpecialOfferService, SpecialOfferService>();
+            services.AddTransient<IDishCategoryService, DishCategoryService>();
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()

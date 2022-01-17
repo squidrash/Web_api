@@ -47,10 +47,10 @@ namespace Web_api_pizza.Controllers
             {
                 ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
             }
-            if (Enum.IsDefined<DishCategoryEnum>(dish.Category) == false)
-            {
-                ModelState.AddModelError("Category", "Не указана категория блюда");
-            }
+            //if (Enum.IsDefined<DishCategoryEnum>(dish.Category) == false)
+            //{
+            //    ModelState.AddModelError("Category", "Не указана категория блюда");
+            //}
 
 
             if (dish.ProductName == null)
