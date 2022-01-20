@@ -10,8 +10,8 @@ using Web_api_pizza.Storage.DTO;
 namespace Web_api_pizza.Migrations
 {
     [DbContext(typeof(PizzaDbContext))]
-    [Migration("20220114112055_Category")]
-    partial class Category
+    [Migration("20220117095735_Category4")]
+    partial class Category4
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -159,6 +159,8 @@ namespace Web_api_pizza.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("Name");
+
                     b.ToTable("Categories");
                 });
 
@@ -170,7 +172,6 @@ namespace Web_api_pizza.Migrations
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<int?>("CategoryId")
-                        .IsRequired()
                         .HasColumnType("integer");
 
                     b.Property<string>("Description")
@@ -355,8 +356,7 @@ namespace Web_api_pizza.Migrations
                     b.HasOne("Web_api_pizza.Storage.Models.DishCategoryEntity", "Category")
                         .WithMany("Dishes")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Category");
                 });

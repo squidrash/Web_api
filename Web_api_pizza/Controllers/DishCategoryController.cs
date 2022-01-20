@@ -15,14 +15,14 @@ namespace Web_api_pizza.Controllers
             _categoryService = categoryService;
         }
 
-        [HttpGet("categories")]
+        [HttpGet("getCategories")]
         public IActionResult GetCategories()
         {
             var categories = _categoryService.GetCatigories();
             return Ok(categories);
         }
 
-        [HttpPost("add")]
+        [HttpPost("addNewCatigory")]
         public IActionResult AddNewCategory(DishCategoryDTO category)
         {
             if(category.Name == null)
@@ -41,7 +41,7 @@ namespace Web_api_pizza.Controllers
             return Ok(result.Message);
         }
 
-        [HttpPut("edit")]
+        [HttpPut("editCategory")]
         public IActionResult EditCategory (DishCategoryDTO category)
         {
             if (category.Name == null)

@@ -114,7 +114,7 @@ namespace Web_api_pizza.Services
             //    }
 
             //}
-            var ordersDTO = _mapper.Map<List<OrderEntity>, List<OrderDTO>>(ordersEntity);
+            var ordersDTO = _mapper.Map<List<OrderDTO>>(ordersEntity);
             
             return ordersDTO;
         }

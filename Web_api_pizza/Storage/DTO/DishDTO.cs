@@ -16,7 +16,7 @@ namespace Web_api_pizza.Storage.DTO
         [Required(ErrorMessage = "Укажите цену блюда")]
         public decimal Price { get; set; }
 
-        [Required(ErrorMessage = "Укажите категорию блюда")]
+        //[Required(ErrorMessage = "Укажите категорию блюда")]
         public DishCategoryDTO Category { get; set; }
 
         public string Description { get; set; }

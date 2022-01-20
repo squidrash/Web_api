@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
@@ -33,7 +34,8 @@ namespace Web_api_pizza.Services
         public List<DishDTO> GetFullMenu(DishFilter filter)
         {
             var menu = _context.Dishes
-                .OrderBy(x => x)
+                .Include(x => x.Category)
+                .OrderBy(x => x.CategoryId)
                 .AsQueryable();
 
             menu = filter.Filters(menu);
@@ -45,7 +47,9 @@ namespace Web_api_pizza.Services
         }
         public DishDTO GetOneDish(int id)
         {
-            var dishEntity = _context.Dishes.FirstOrDefault(d => d.Id == id);
+            var dishEntity = _context.Dishes
+                .Include(x => x.Category)
+                .FirstOrDefault(d => d.Id == id);
             var dishDTO = _mapper.Map<DishDTO>(dishEntity);
             return dishDTO;
         }
@@ -71,21 +75,19 @@ namespace Web_api_pizza.Services
                 return null;
             }
 
+
             var editableDish = _mapper.Map<DishEntity>(dish);
+            editableDish.CategoryId = dish.Category.Id;
             editableDish.Id = 0;
 
             _context.Dishes.Add(editableDish);
             _context.SaveChanges();
-            result.IsSuccess = true;
-            result.Message = "Блюдо изменено";
-            return result;
+            return new OperationResult(true, "Блюдо изменено");
         }
         public OperationResult AddToMenu(DishDTO dish)
         {
-            dish.Id = 0;
             var dishEntity = _context.Dishes
-                .Where(d => d.ProductName == dish.ProductName && d.IsActive == true)
-                .FirstOrDefault();
+                .FirstOrDefault(d => d.ProductName == dish.ProductName && d.IsActive == true);
 
             var result = new OperationResult(false);
             if (dishEntity != null)
@@ -93,9 +95,25 @@ namespace Web_api_pizza.Services
                 result.Message = "Блюдо уже есть в меню";
                 return result;
             }
+            if(dish.Category != null)
+            {
+                var category = _context.Categories
+                    .FirstOrDefault(x => x.Id == dish.Category.Id);
+                if(category == null)
+                {
+                    result.Message = "Такой категории нет в БД";
+                    return result;
+                }
+            }
 
-            dishEntity = _mapper.Map(dish, dishEntity);
-            _context.Dishes.Add(dishEntity);
+            var newDish = new DishEntity();
+            newDish = _mapper.Map(dish, newDish);
+            newDish.IsActive = true;
+            if(dish.Category != null)
+            {
+                newDish.CategoryId = dish.Category.Id;
+            }
+            _context.Dishes.Add(newDish);
             _context.SaveChanges();
 
             result.IsSuccess = true;
