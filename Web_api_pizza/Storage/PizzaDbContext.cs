@@ -14,12 +14,12 @@ namespace Web_api_pizza.Storage.DTO
         public DbSet<OrderDishEntity> OrderDishEntities { get; set; }
 
         public DbSet<DishEntity> Dishes { get; set; }
+        public DbSet<DishCategoryEntity> Categories { get; set; }
 
         public DbSet<AddressEntity> Addresses { get; set; }
         public DbSet<AddressOrderEntity> AddressOrderEntities { get; set; }
 
         public DbSet<SpecialOfferEntity> Offers { get; set; }
-        public DbSet<SpecialOfferOrderEntity> SpecialOfferOrderEntities { get; set; }
 
 
         public PizzaDbContext(DbContextOptions<PizzaDbContext> options)
@@ -36,11 +36,17 @@ namespace Web_api_pizza.Storage.DTO
 
 
             modelBuilder.Entity<SpecialOfferEntity>()
-            .HasMany(so => so.MainDishes)
+            .HasOne(so => so.MainDish)
             .WithMany(d => d.OfferMainDishes)
-            .UsingEntity(j => j.ToTable("OfferMainDishesEntity"));
+            .HasForeignKey(so => so.MainDishId);
 
+            modelBuilder.Entity<DishCategoryEntity>()
+                .HasAlternateKey(c => c.Name);
 
+            modelBuilder.Entity<DishEntity>()
+            .HasOne(d => d.Category)
+            .WithMany(c => c.Dishes)
+            .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

@@ -100,7 +100,7 @@ namespace Web_api_pizza.Controllers
 
         //работают все 3 
         [HttpPost("create")]
-        public IActionResult CreateOrder(List<DishDTO> dishes, int customerId = 0, int addressId = 0)
+        public IActionResult CreateOrder(List<DishDTO> dishes, [FromQuery] string promoCode, [FromQuery] int customerId, [FromQuery] int addressId)
         {
             if(dishes == null)
             {
@@ -118,7 +118,7 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var order = _orderService.CreateOrder(dishes, customerId, addressId);
+            var order = _orderService.CreateOrder(dishes, promoCode, customerId, addressId);
             if (order == "NullDish")
             {
                 return BadRequest($"Ошибка при создании заказа: некоторых блюд нет в меню {order}");

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Web_api_pizza.Filters;
 using Web_api_pizza.Services;
@@ -57,25 +58,6 @@ namespace Web_api_pizza.Controllers
                 return BadRequest(ModelState);
             }
 
-            //var message = _specialOfferService.AddNewSpecialOffer(specialOffer);
-
-            //if(message == "NullMainDishes")
-            //{
-            //    return BadRequest("Список основных блюд не соответствует блюдам из БД");
-            //}
-            //if (message == "NullExtraDish")
-            //{
-            //    return BadRequest("Дополнительное блюдо не соответствует блюдам из БД");
-            //}
-            //if (message == "RequiredNumberOfDish")
-            //{
-            //    return BadRequest($"Недопустимое значение RequiredNumberOfDish - {specialOffer.RequiredNumberOfDish}");
-            //}
-            //if (message == "NumberOfExtraDish")
-            //{
-            //    return BadRequest($"Недопустимое значение NumberOfExtraDish — {specialOffer.NumberOfExtraDish}");
-            //}
-
             var result = _specialOfferService.AddNewSpecialOffer(specialOffer);
             if (result.IsSuccess == false)
             {
@@ -96,10 +78,10 @@ namespace Web_api_pizza.Controllers
             {
                 ModelState.AddModelError("TypeOffer", "Не указан тип акции");
             }
-            //if (specialOffer.Description == null)
-            //{
-            //    ModelState.AddModelError("Description", "Поле Description не может быть пустым");
-            //}
+            if (specialOffer.Description == null)
+            {
+                ModelState.AddModelError("Description", "Поле Description не может быть пустым");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -133,6 +115,28 @@ namespace Web_api_pizza.Controllers
                 return NotFound("Акция не найдена");
             }
             return Ok(message);
+        }
+        [HttpPost("checkOffer")]
+        public IActionResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
+        {
+            if (promoCode == null)
+            {
+                ModelState.AddModelError("PromoCode", $"Не указан промокод");
+            }
+            if (dishes == null)
+            {
+                ModelState.AddModelError("Dishes", $"Не указаны блюда для проверки соответствия акции");
+            }
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = _specialOfferService.CheckComplianceSpecialOffer(dishes, promoCode);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result.Message);
+            }
+            return Ok(result.Message);
         }
     }
 }

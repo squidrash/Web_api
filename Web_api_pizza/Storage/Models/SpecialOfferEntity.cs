@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
 using AutoMapper;
 using Web_api_pizza.Storage.Enums;
 
@@ -28,9 +26,10 @@ namespace Web_api_pizza.Storage.Models
         //только для акций типа общая скидка
         public int Discount { get; set; }
 
-        //блюда участвующие в акции
+        //блюдо участвующие в акции
+        public int? MainDishId { get; set; }
         [IgnoreMap]
-        public List<DishEntity> MainDishes { get; set; }
+        public DishEntity MainDish { get; set; }
 
         //число блюд необходимо для акций типа 1+1=3 и блюдо в подарок
         public int RequiredNumberOfDish { get; set; }
@@ -43,7 +42,8 @@ namespace Web_api_pizza.Storage.Models
         [IgnoreMap]
         public DishEntity ExtraDish { get; set; }
 
-
+        //минимальная сумма заказа для акции типа GeneralDiscount
+        public decimal MinOrderAmount { get; set; }
 
 
     }

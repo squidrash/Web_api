@@ -36,6 +36,7 @@ namespace Web_api_pizza
                 {
                     options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                     options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                 });
 
             var mapperConfig = new MapperConfiguration(mc =>
@@ -51,6 +52,7 @@ namespace Web_api_pizza
             services.AddTransient<ICustomerService, CustomerService>();
             services.AddTransient<IOrderService, OrderService>();
             services.AddTransient<ISpecialOfferService, SpecialOfferService>();
+            services.AddTransient<IDishCategoryService, DishCategoryService>();
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()

@@ -10,12 +10,12 @@ namespace Web_api_pizza.Storage.Models
 
         public List<OrderDishEntity> Products { get; set; }
 
-        public DateTime CreatTime { get; set; }
-        public StatusEnum Status { get; set; }
+        public DateTime CreateTime { get; set; }
+        public OrderStatusEnum Status { get; set; }
         public decimal TotalSum { get; set; }
+        public decimal DiscountSum { get; set; }
 
         public AddressOrderEntity AddressOrder { get; set; }
         public CustomerOrderEntity Customer { get; set; }
-        public SpecialOfferOrderEntity SpecialOffer { get; set; }
     }
 }

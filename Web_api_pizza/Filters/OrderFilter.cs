@@ -19,7 +19,7 @@ namespace Web_api_pizza.Filters
         public bool? HasAddress { get; set; }
 
         [FromQuery(Name = "status")]
-        public StatusEnum? Status { get; set; }
+        public OrderStatusEnum? OrderStatus { get; set; }
 
         public IQueryable<OrderEntity> Filters(IQueryable<OrderEntity> query)
         {
@@ -49,32 +49,10 @@ namespace Web_api_pizza.Filters
                     query = query.Where(x => x.AddressOrder == null);
                 }
             }
-            if(Status.HasValue)
+            if(OrderStatus.HasValue)
             {
-                switch(Status.Value)
-                {
-                    case StatusEnum.New:
-                        query = query.Where(x => x.Status == StatusEnum.New);
-                        break;
-                    case StatusEnum.Confirmed:
-                        query = query.Where(x => x.Status == StatusEnum.Confirmed);
-                        break;
-                    case StatusEnum.Preparing:
-                        query = query.Where(x => x.Status == StatusEnum.Preparing);
-                        break;
-                    case StatusEnum.OnTheWay:
-                        query = query.Where(x => x.Status == StatusEnum.OnTheWay);
-                        break;
-                    case StatusEnum.Delivered:
-                        query = query.Where(x => x.Status == StatusEnum.Delivered);
-                        break;
-                    case StatusEnum.Cancelled:
-                        query = query.Where(x => x.Status == StatusEnum.Cancelled);
-                        break;
-                    default:
-                        break;
-                }
-                    
+                var status = OrderStatus.Value;
+                query = query.Where(x => x.Status == status);
             }
                 
             return query;
