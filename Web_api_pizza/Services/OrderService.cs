@@ -41,7 +41,7 @@ namespace Web_api_pizza.Services
             {"Cancelled", OrderStatusEnum.Cancelled}
         };
 
-        // поменял когда делал сайт
+        //поменял когда делал сайт
         //private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
         //{
         //    {"Новый", OrderStatusEnum.New },
@@ -60,7 +60,7 @@ namespace Web_api_pizza.Services
             { OrderStatusEnum.Delivered, new OrderStatusEnum[] { } },
             { OrderStatusEnum.Cancelled, new OrderStatusEnum[] { } },
         };
-        // поменял когда делал сайт
+        //поменял когда делал сайт
         //private readonly List<string> StatusList = new List<string>()
         //{
         //    "Новый","Подтвержден","Готовится","В пути","Доставлен","Отменен"
@@ -90,7 +90,7 @@ namespace Web_api_pizza.Services
             
 
             List<OrderEntity> ordersEntity;
-            ordersEntity = orders.OrderByDescending(o => o.CreatTime).ToList();
+            ordersEntity = orders.OrderByDescending(o => o.CreateTime).ToList();
 
             //Console.WriteLine("Это объект из базы");
             //foreach (var o in ordersEntity)
@@ -336,7 +336,7 @@ namespace Web_api_pizza.Services
                 .ToList();
 
             var order = new OrderEntity() {
-                CreatTime = DateTime.Now,
+                CreateTime = DateTime.Now,
                 Status = OrderStatusEnum.New
             };
             _context.Orders.Add(order);

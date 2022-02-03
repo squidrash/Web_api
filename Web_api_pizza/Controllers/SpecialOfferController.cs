@@ -116,7 +116,7 @@ namespace Web_api_pizza.Controllers
             }
             return Ok(message);
         }
-        [HttpGet("checkOffer")]
+        [HttpPost("checkOffer")]
         public IActionResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
             if (promoCode == null)

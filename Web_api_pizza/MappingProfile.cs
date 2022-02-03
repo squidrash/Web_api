@@ -47,7 +47,7 @@ namespace Web_api_pizza
             CreateMap<CustomerOrderEntity, OrderDTO>()
                 .ForMember(dto => dto.Id, opt => opt.MapFrom(en => en.Order.Id))
                 .ForMember(dto => dto.Status, opt => opt.MapFrom(en => en.Order.Status))
-                .ForMember(dto => dto.CreatTime, opt => opt.MapFrom(en => en.Order.CreatTime))
+                .ForMember(dto => dto.CreateTime, opt => opt.MapFrom(en => en.Order.CreateTime))
                 .ForMember(dto => dto.TotalSum, opt => opt.MapFrom(en => en.Order.TotalSum))
                 .ForMember(dto => dto.Dishes, opt => opt.MapFrom(en => en.Order.Products))
                 .ForMember(dto => dto.Address, opt => opt.MapFrom(en => en.Order.AddressOrder));
@@ -84,6 +84,11 @@ namespace Web_api_pizza
             CreateMap<DishDTO, DishEntity>();
             //.ForMember(src => src.OfferMainDishes, opt => opt.Ignore())
             //.ForMember(src => src.OfferExtraDish, opt => opt.Ignore());
+
+            CreateMap<DishCategoryEntity, MenuDTO>()
+                .ForMember(dto => dto.CategoryId, opt => opt.MapFrom(en => en.Id))
+                .ForMember(dto => dto.CategoryName, opt => opt.MapFrom(en => en.Name));
+            CreateMap<DishEntity, MainDishDTO>();
 
             CreateMap<DishCategoryEntity, DishCategoryDTO>();
             CreateMap<DishCategoryDTO, DishCategoryEntity>();

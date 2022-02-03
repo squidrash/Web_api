@@ -12,7 +12,10 @@ namespace Web_api_pizza.Services
 {
     public interface IMenuService
     {
-        public List<DishDTO> GetFullMenu(DishFilter filter);
+        //public List<DishDTO> GetFullMenu(DishFilter filter);
+        public List<MenuDTO> GetFullMenu(DishFilter filter);
+        //public object GetFullMenu(DishFilter filter);
+
         public DishDTO GetOneDish(int id);
         public OperationResult RemoveFromMenu(int id);
         public OperationResult EditMenu(DishDTO dish);
@@ -31,7 +34,8 @@ namespace Web_api_pizza.Services
             _mapper = mapper;
         }
 
-        public List<DishDTO> GetFullMenu(DishFilter filter)
+        //2 версия
+        public List<MenuDTO> GetFullMenu(DishFilter filter)
         {
             var menu = _context.Dishes
                 .Include(x => x.Category)
@@ -41,10 +45,45 @@ namespace Web_api_pizza.Services
             menu = filter.Filters(menu);
             var menuEntity = menu.ToList();
 
-            var menuDTO = _mapper.Map<List<DishDTO>>(menuEntity);
+            var fullMenu = menuEntity
+                .GroupBy(x => x.CategoryId)
+                .Select(y => new MenuDTO
+                {
+                    CategoryId = y.Key,
+                    CategoryName = y.Select(x =>
+                    {
+                       var name = x.Category.Name;
+                        return name;
+                    }).ToList()[0],
+                    Dishes = y.Select(x =>
+                    {
+                        var mainDish = _mapper.Map<MainDishDTO>(x);
+                        return mainDish;
+                    }).ToList()
 
-            return menuDTO;
+                }).ToList();
+
+
+            //var menuDTO = _mapper.Map<List<DishDTO>>(menuEntity);
+
+            return fullMenu;
         }
+
+        //1 версия
+        //public List<DishDTO> GetFullMenu(DishFilter filter)
+        //{
+        //    var menu = _context.Dishes
+        //        .Include(x => x.Category)
+        //        .OrderBy(x => x.CategoryId)
+        //        .AsQueryable();
+
+        //    menu = filter.Filters(menu);
+        //    var menuEntity = menu.ToList();
+
+        //    var menuDTO = _mapper.Map<List<DishDTO>>(menuEntity);
+
+        //    return menuDTO;
+        //}
         public DishDTO GetOneDish(int id)
         {
             var dishEntity = _context.Dishes
@@ -95,23 +134,23 @@ namespace Web_api_pizza.Services
                 result.Message = "Блюдо уже есть в меню";
                 return result;
             }
-            if(dish.Category != null)
-            {
-                var category = _context.Categories
-                    .FirstOrDefault(x => x.Id == dish.Category.Id);
-                if(category == null)
-                {
-                    result.Message = "Такой категории нет в БД";
-                    return result;
-                }
-            }
 
             var newDish = new DishEntity();
             newDish = _mapper.Map(dish, newDish);
             newDish.IsActive = true;
-            if(dish.Category != null)
+            if(dish.Category == null)
             {
-                newDish.CategoryId = dish.Category.Id;
+                newDish.CategoryId = 0;
+            }
+            else
+            {
+                var category = _context.Categories
+                    .FirstOrDefault(x => x.Id == dish.Category.Id);
+                if (category == null)
+                {
+                    result.Message = "Такой категории нет в БД";
+                    return result;
+                }
             }
             _context.Dishes.Add(newDish);
             _context.SaveChanges();

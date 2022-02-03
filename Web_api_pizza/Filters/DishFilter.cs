@@ -14,9 +14,9 @@ namespace Web_api_pizza.Filters
         [FromQuery(Name = "Category")]
         public int? CategoryId { get; set; }
 
-        public IQueryable<DishEntity> Filters (IQueryable<DishEntity> query)
+        public IQueryable<DishEntity> Filters(IQueryable<DishEntity> query)
         {
-            if(IsActive.HasValue)
+            if (IsActive.HasValue)
             {
                 query = query.Where(x => x.IsActive == IsActive.Value);
             }
@@ -27,5 +27,7 @@ namespace Web_api_pizza.Filters
 
             return query;
         }
+
+
     }
 }
