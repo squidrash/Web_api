@@ -8,14 +8,16 @@ namespace Web_api_pizza.SpecialOfferStrategy
 {
     public class GeneralDiscountStrategy : IComplianceSpecialOfferStrategy
     {
-        public bool CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
+        public decimal CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
         {
-            var orderAmount = dishes.Sum(x => x.Price * x.Quantity);
-            if(orderAmount < specialOffer.MinOrderAmount)
+            var orderSum = dishes.Sum(x => x.Price * x.Quantity);
+            if(orderSum < specialOffer.MinOrderAmount)
             {
-                return false;
+                return -1;
             }
-            return true;
+
+            var discountSum = orderSum * specialOffer.Discount / 100;
+            return discountSum;
         }
     }
 }

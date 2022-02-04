@@ -19,6 +19,8 @@ namespace Web_api_pizza.Services
         public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
         public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
+        //public OperationResultWithData<decimal> CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
+
         public string DeleteSpecialOffer(int specialOfferId);
     }
 
@@ -167,13 +169,11 @@ namespace Web_api_pizza.Services
 
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
-            var result = new OperationResult(false);
             var specialOfferEntity = _context.Offers
                 .FirstOrDefault(x => x.PromoCode == promoCode);
             if (specialOfferEntity == null)
             {
-                result.Message = "Акции с таким промокодом не существует";
-                return result;
+                return new OperationResult(false, "Акции с таким промокодом не существует");
             }
             var complianceContext = new ComplianceContext();
 
@@ -189,14 +189,35 @@ namespace Web_api_pizza.Services
                     complianceContext.SetStrategy(new ThreeForPriceTwoStrategy());
                     break;
             }
-            result.IsSuccess = complianceContext.DoSomeBusinessLogic(dishes, specialOfferEntity);
-            if (result.IsSuccess == false)
+
+            //доп проверка
+            //var dishesKek = _context.Dishes
+            //    .Where(x => dishes.Select(y => y.Id.Value).Contains(x.Id))
+            //    .ToList();
+
+            //var dishesLol = dishesKek.Select(x =>
+            //{
+            //    var quantity = dishes.Where(d => d.Id == x.Id)
+            //                         .Select(y => y.Quantity > 0 ? y.Quantity : 1)
+            //                         .First();
+            //    return new DishDTO
+            //    {
+            //        ProductName = x.ProductName,
+            //        Quantity = quantity,
+            //        Price = x.Price
+            //    };
+            //}).ToList();
+
+
+            var result = complianceContext.DoSomeBusinessLogic(dishes, specialOfferEntity);
+            if (result == -1)
             {
-                result.Message = "Не соответствует условиям акции";
-                return result;
+                return new OperationResult(false, "Не соответствует условиям акции");
             }
-            result.Message = "промокод применен";
-            return result;
+            var x = new ResultOfferCheck(true, "Промокод применен", result);
+
+            var y = (OperationResult)x;
+            return y;
         }
 
         private OperationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)

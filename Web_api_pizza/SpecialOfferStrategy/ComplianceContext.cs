@@ -23,9 +23,9 @@ namespace Web_api_pizza.SpecialOfferStrategy
             _strategy = strategy;
         }
 
-        public bool DoSomeBusinessLogic(List<DishDTO> dishes, SpecialOfferEntity offer)
+        public decimal DoSomeBusinessLogic(List<DishDTO> dishes, SpecialOfferEntity offer)
         {
-            var result= _strategy.CheckComplianceSpecialOffer(dishes, offer);
+            var result = _strategy.CheckComplianceSpecialOffer(dishes, offer);
             return result;
         }
     }

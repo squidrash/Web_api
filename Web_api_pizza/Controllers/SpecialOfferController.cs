@@ -136,7 +136,7 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(result.Message);
             }
-            return Ok(result.Message);
+            return Ok(result);
         }
     }
 }
