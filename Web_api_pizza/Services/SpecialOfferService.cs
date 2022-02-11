@@ -19,6 +19,7 @@ namespace Web_api_pizza.Services
         public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
         public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
+        //public ResultOfferCheck CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
         //public OperationResultWithData<decimal> CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
 
         public string DeleteSpecialOffer(int specialOfferId);
@@ -167,6 +168,7 @@ namespace Web_api_pizza.Services
             return message;
         }
 
+        //public ResultOfferCheck CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
             var specialOfferEntity = _context.Offers
@@ -214,10 +216,8 @@ namespace Web_api_pizza.Services
             {
                 return new OperationResult(false, "Не соответствует условиям акции");
             }
-            var x = new ResultOfferCheck(true, "Промокод применен", result);
 
-            var y = (OperationResult)x;
-            return y;
+            return new ResultOfferCheck(true, "Промокод применен", result);
         }
 
         private OperationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)

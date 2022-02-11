@@ -15,7 +15,7 @@ namespace Web_api_pizza.Services
     {
         public OrderDTO GetOneOrder(int id);
         public string ChangeOrderStatus(int orderId, string orderStatus);
-        public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId = 0, int addressId = 0);
+        public string CreateOrder(List<DishDTO> dishes, string promocode, int customerId = 0, int addressId = 0);
         public string RemoveOrder(int id);
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0);
     }
@@ -79,6 +79,7 @@ namespace Web_api_pizza.Services
                     .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
                     .ThenInclude(a => a.Address)
+                .OrderByDescending(o => o)
                 .AsQueryable();
 
             if (customerId != 0)
@@ -163,26 +164,34 @@ namespace Web_api_pizza.Services
             }
         }
         
-        public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
+        public string CreateOrder(List<DishDTO> dishes, string promocode, int customerId, int addressId)
         {
-            var resultValidation = OrderValidate(dishes, customerId, addressId);
+            var resultValidation = OrderValidate(dishes, customerId, addressId, promocode);
             if (resultValidation.IsSuccess == false)
             {
                 return resultValidation.Message;
             }
 
             var order = CreateOrderDishes(dishes);
-            
-            if (promoCode != null)
+            if(promocode != null)
             {
-                var checkOfferResult = (ResultOfferCheck)_offer.CheckComplianceSpecialOffer(dishes, promoCode);
-                if (checkOfferResult.IsSuccess == false)
-                {
-                    return checkOfferResult.Message; 
-                }
+                var checkOfferResult = (ResultOfferCheck)resultValidation;
                 order.DiscountSum = checkOfferResult.DiscountSum;
                 order.TotalSum -= checkOfferResult.DiscountSum;
             }
+
+            //if (promocode != null)
+            //{
+            //    //var checkOfferResult = (ResultOfferCheck)_offer.CheckComplianceSpecialOffer(dishes, promocode);
+            //    var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promocode);
+            //    var checkOfferResult1 = (ResultOfferCheck)checkOfferResult;
+            //    if (checkOfferResult.IsSuccess == false)
+            //    {
+            //        return checkOfferResult.Message;
+            //    }
+            //    order.DiscountSum = checkOfferResult1.DiscountSum;
+            //    order.TotalSum -= checkOfferResult1.DiscountSum;
+            //}
 
             if (customerId != 0)
             {
@@ -224,7 +233,7 @@ namespace Web_api_pizza.Services
             }
         }
 
-            private OperationResult OrderValidate(List<DishDTO> dishes, int customerId, int addressId)
+            private OperationResult OrderValidate(List<DishDTO> dishes, int customerId, int addressId, string promocode)
         {
             var result = new OperationResult(false);
 
@@ -256,6 +265,14 @@ namespace Web_api_pizza.Services
                     result.Message = "Адрес не найден";
                     return result;
                 }
+            }
+
+            
+            if (promocode != null)
+            {
+                var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promocode);
+                
+                return checkOfferResult;
             }
 
             result.IsSuccess = true;
