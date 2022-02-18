@@ -8,18 +8,18 @@ namespace Web_api_pizza.SpecialOfferStrategy
 {
     public class ThreeForPriceTwoStrategy : IComplianceSpecialOfferStrategy
     {
-        public bool CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
+        public decimal CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
         {
-            var checkMainDish = dishes
+            var mainDish = dishes
                         .Where(x => x.Id == specialOffer.MainDishId
                         && x.Quantity >= specialOffer.RequiredNumberOfDish + specialOffer.NumberOfExtraDish)
                         .FirstOrDefault();
-            Console.WriteLine(checkMainDish);
-            if (checkMainDish == null)
+            if (mainDish == null)
             {
-                return false;
+                return -1;
             }
-            return true;
+            var discountSum = mainDish.Price * specialOffer.NumberOfExtraDish;
+            return discountSum;
         }
     }
 }

@@ -5,9 +5,12 @@ namespace Web_api_pizza.Storage
     {
         public bool IsSuccess { get; set; }
         public string Message { get; set; }
-
         
-        public OperationResult(bool isSuccess, string message = "Новый, пустой экземпляр")
+        public OperationResult(bool isSuccess)
+        {
+            IsSuccess = isSuccess;
+        }
+        public OperationResult(bool isSuccess, string message)
         {
             IsSuccess = isSuccess;
             Message = message;

@@ -12,8 +12,7 @@ namespace Web_api_pizza.Services
 {
     public interface IMenuService
     {
-        //public List<DishDTO> GetFullMenu(DishFilter filter);
-        public List<MenuDTO> GetFullMenu(DishFilter filter);
+        public List<MenuDTO> GetMenu(DishFilter filter);
         //public object GetFullMenu(DishFilter filter);
 
         public DishDTO GetOneDish(int id);
@@ -35,7 +34,7 @@ namespace Web_api_pizza.Services
         }
 
         //2 версия
-        public List<MenuDTO> GetFullMenu(DishFilter filter)
+        public List<MenuDTO> GetMenu(DishFilter filter)
         {
             var menu = _context.Dishes
                 .Include(x => x.Category)
@@ -70,7 +69,7 @@ namespace Web_api_pizza.Services
         }
 
         //1 версия
-        //public List<DishDTO> GetFullMenu(DishFilter filter)
+        //public List<DishDTO> GetMenu(DishFilter filter)
         //{
         //    var menu = _context.Dishes
         //        .Include(x => x.Category)
@@ -84,6 +83,7 @@ namespace Web_api_pizza.Services
 
         //    return menuDTO;
         //}
+
         public DishDTO GetOneDish(int id)
         {
             var dishEntity = _context.Dishes
@@ -95,7 +95,7 @@ namespace Web_api_pizza.Services
         public OperationResult RemoveFromMenu(int id)
         {
             var removeDish = _context.Dishes.FirstOrDefault(m => m.Id == id);
-            if(removeDish == null || removeDish.IsActive == false)
+            if (removeDish == null || removeDish.IsActive == false)
             {
                 return null;
             }

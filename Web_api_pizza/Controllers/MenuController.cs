@@ -17,13 +17,13 @@ namespace Web_api_pizza.Controllers
             _menuService = menuService;
         }
         
-        [HttpGet("fullMenu")]
+        [HttpGet("fullmenu")]
         public IActionResult GetMenu([FromQuery] DishFilter filter)
         {
-            var menu = _menuService.GetFullMenu(filter);
+            var menu = _menuService.GetMenu(filter);
             return Ok(menu);
         }
-        
+
         [HttpGet("onedish/{id}")]
         public IActionResult GetDish(int id)
         {

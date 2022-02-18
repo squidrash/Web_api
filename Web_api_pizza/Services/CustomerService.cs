@@ -66,8 +66,10 @@ namespace Web_api_pizza.Services
                 .Where(c => c.Id == id)
                 .Include(c => c.Orders)
                     .ThenInclude(ce => ce.Order)
+                        
                         .ThenInclude(o => o.Products)
                             .ThenInclude(p => p.Dish)
+                            
 
                 .Include(c => c.Orders)
                     .ThenInclude(ce => ce.Order)

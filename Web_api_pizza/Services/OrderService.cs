@@ -15,7 +15,7 @@ namespace Web_api_pizza.Services
     {
         public OrderDTO GetOneOrder(int id);
         public string ChangeOrderStatus(int orderId, string orderStatus);
-        public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId = 0, int addressId = 0);
+        public string CreateOrder(List<DishDTO> dishes, string promocode, int customerId = 0, int addressId = 0);
         public string RemoveOrder(int id);
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0);
     }
@@ -79,6 +79,7 @@ namespace Web_api_pizza.Services
                     .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
                     .ThenInclude(a => a.Address)
+                .OrderByDescending(o => o)
                 .AsQueryable();
 
             if (customerId != 0)
@@ -162,80 +163,35 @@ namespace Web_api_pizza.Services
                 return message;
             }
         }
-
-        //новый
-        //public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
-        //{
-        //    string message = null;
-
-        //    if(promoCode != null)
-        //    {
-        //        var specialOffer = _context.Offers
-        //        .Where(x => x.PromoCode == promoCode)
-        //        .FirstOrDefault();
-        //        if (specialOffer == null)
-        //        {
-        //            return null;
-        //        }
-        //        if (specialOffer.TypeOffer == TypeOfferEnum.GeneralDiscount)
-        //        {
-
-        //        }
-        //        else
-        //        {
-
-        //        }
-        //    }
-        //    else
-        //    {
-                
-        //    }
-
-        //    var order = CreateOrderDishes(dishes);
-        //    if(order == null)
-        //    {
-        //        message = "NullMenu";
-        //        return message;
-        //    }
-
-        //    if(customerId != 0)
-        //    {
-        //        var customerOrder = CreateOrderCustomer(order, customerId);
-        //        if (customerOrder == null)
-        //        {
-        //            message = "NullCustomer";
-        //            return message;
-        //        }
-        //    }
-
-        //    if (addressId != 0)
-        //    {
-        //        var addressOrder = CreateAddressOrder(order.Id, addressId);
-        //        if (addressOrder == null)
-        //        {
-        //            RemoveOrder(order.Id);
-        //            message = "NullAddress";
-        //            return message;
-        //        }
-        //    }
-        //    message = "Заказ создан";
-        //    return message;
-        //}
-
-        public string CreateOrder(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
+        
+        public string CreateOrder(List<DishDTO> dishes, string promocode, int customerId, int addressId)
         {
-            var resultValidation = OrderValidate(dishes, promoCode, customerId, addressId);
-            if(resultValidation.IsSuccess == false)
+            var resultValidation = OrderValidate(dishes, customerId, addressId, promocode);
+            if (resultValidation.IsSuccess == false)
             {
                 return resultValidation.Message;
             }
 
             var order = CreateOrderDishes(dishes);
-
-            if (promoCode != null)
+            if(promocode != null)
             {
-                ApplyDiscount(order, promoCode);
+                var checkOfferResult = (ResultOfferCheck)resultValidation;
+                order.DiscountSum = checkOfferResult.DiscountSum;
+                order.TotalSum -= checkOfferResult.DiscountSum;
             }
+
+            //if (promocode != null)
+            //{
+            //    //var checkOfferResult = (ResultOfferCheck)_offer.CheckComplianceSpecialOffer(dishes, promocode);
+            //    var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promocode);
+            //    var checkOfferResult1 = (ResultOfferCheck)checkOfferResult;
+            //    if (checkOfferResult.IsSuccess == false)
+            //    {
+            //        return checkOfferResult.Message;
+            //    }
+            //    order.DiscountSum = checkOfferResult1.DiscountSum;
+            //    order.TotalSum -= checkOfferResult1.DiscountSum;
+            //}
 
             if (customerId != 0)
             {
@@ -277,7 +233,7 @@ namespace Web_api_pizza.Services
             }
         }
 
-        private OperationResult OrderValidate(List<DishDTO> dishes, string promoCode, int customerId, int addressId)
+            private OperationResult OrderValidate(List<DishDTO> dishes, int customerId, int addressId, string promocode)
         {
             var result = new OperationResult(false);
 
@@ -291,18 +247,6 @@ namespace Web_api_pizza.Services
                 result.Message = "Блюда не соответствуют БД";
                 return result;
             }
-
-            if (promoCode != null)
-            {
-                var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promoCode);
-                if (checkOfferResult.IsSuccess == false)
-                {
-                    result.Message = checkOfferResult.Message;
-                    return result;
-                }
-            }
-
-
             if (customerId != 0)
             {
                 var customer = _context.Customers.FirstOrDefault(c => c.Id == customerId);
@@ -321,6 +265,14 @@ namespace Web_api_pizza.Services
                     result.Message = "Адрес не найден";
                     return result;
                 }
+            }
+
+            
+            if (promocode != null)
+            {
+                var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promocode);
+                
+                return checkOfferResult;
             }
 
             result.IsSuccess = true;
@@ -364,50 +316,6 @@ namespace Web_api_pizza.Services
             _context.SaveChanges();
 
             return order;
-        }
-
-        private void ApplyDiscount(OrderEntity order, string promoCode)
-        {
-            var specialOffer = _context.Offers.FirstOrDefault(x => x.PromoCode == promoCode);
-
-            switch (specialOffer.TypeOffer)
-            {
-                case TypeOfferEnum.GeneralDiscount:
-                    {
-                        order.DiscountSum = order.TotalSum * specialOffer.Discount / 100;
-                        order.TotalSum -= order.DiscountSum;
-                        break;
-                    };
-                case TypeOfferEnum.ExtraDish:
-                    {
-                        var extraDish = _context.Dishes
-                            .Where(x => x.Id == specialOffer.ExtraDishId)
-                            .Select( x => new
-                            {
-                                x.Price,
-                                Quantity = specialOffer.NumberOfExtraDish
-                            })
-                            .FirstOrDefault();
-                        order.DiscountSum = extraDish.Price * extraDish.Quantity;
-                        order.TotalSum -= order.DiscountSum;
-                        break;
-                    };
-                case TypeOfferEnum.ThreeForPriceTwo:
-                    {
-                        var extraDish = _context.Dishes
-                            .Where(x => x.Id == specialOffer.MainDishId)
-                            .Select(x => new
-                            {
-                                x.Price,
-                                Quantity = specialOffer.NumberOfExtraDish
-                            })
-                            .FirstOrDefault();
-                        order.DiscountSum = extraDish.Price * extraDish.Quantity;
-                        order.TotalSum -= order.DiscountSum;
-                        break;
-                    }
-            }
-            _context.SaveChanges();
         }
     }
 }

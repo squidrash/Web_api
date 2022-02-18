@@ -7,21 +7,23 @@ namespace Web_api_pizza.SpecialOfferStrategy
 {
     public class ExtraDishStrategy : IComplianceSpecialOfferStrategy
     {
-        public bool CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
+        public decimal CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
         {
-            var checkMainDish = dishes
+            var mainDish = dishes
                         .Where(x => x.Id == specialOffer.MainDishId
                         && x.Quantity >= specialOffer.RequiredNumberOfDish)
                         .FirstOrDefault();
-            var checkExtraDish = dishes
+            var extraDish = dishes
                 .Where(x => x.Id == specialOffer.ExtraDishId
                 && x.Quantity >= specialOffer.NumberOfExtraDish)
                 .FirstOrDefault();
-            if (checkMainDish == null || checkExtraDish == null)
+            if (mainDish == null || extraDish == null)
             {
-                return false;
+                return -1;
             }
-            return true;
+
+            var discountSum = extraDish.Price * specialOffer.NumberOfExtraDish;
+            return discountSum;
         }
     }
 }

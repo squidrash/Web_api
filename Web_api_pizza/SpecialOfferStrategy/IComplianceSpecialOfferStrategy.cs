@@ -8,6 +8,6 @@ namespace Web_api_pizza.SpecialOfferStrategy
 {
     public interface IComplianceSpecialOfferStrategy
     {
-        public bool CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer);
+        public decimal CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer);
     }
 }
