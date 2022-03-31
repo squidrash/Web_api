@@ -107,22 +107,55 @@ namespace Web_api_pizza.Services
         }
         public OperationResult EditMenu(DishDTO dish)
         {
-            var result = RemoveFromMenu(dish.Id.Value);
-
-            if (result == null)
+            var dishEntity = _context.Dishes.FirstOrDefault(x => x.Id == dish.Id);
+            if(dishEntity == null)
             {
                 return null;
             }
 
+            if (dishEntity.ProductName == dish.ProductName && dishEntity.Price == dish.Price)
+            {
+                dishEntity.CategoryId = dish.Category.Id;
+                dishEntity.Image = dish.Image;
+                dishEntity.Description = dish.Description;
+            }
+            else
+            {
+                var result = RemoveFromMenu(dish.Id.Value);
 
-            var editableDish = _mapper.Map<DishEntity>(dish);
-            editableDish.CategoryId = dish.Category.Id;
-            editableDish.Id = 0;
+                if (result == null)
+                {
+                    return null;
+                }
 
-            _context.Dishes.Add(editableDish);
+                var editableDish = _mapper.Map<DishEntity>(dish);
+                editableDish.CategoryId = dish.Category.Id;
+                editableDish.Id = 0;
+
+                _context.Dishes.Add(editableDish);
+            }
+            
             _context.SaveChanges();
             return new OperationResult(true, "Блюдо изменено");
         }
+        //public OperationResult EditMenu(DishDTO dish)
+        //{
+        //    var result = RemoveFromMenu(dish.Id.Value);
+
+        //    if (result == null)
+        //    {
+        //        return null;
+        //    }
+
+
+        //    var editableDish = _mapper.Map<DishEntity>(dish);
+        //    editableDish.CategoryId = dish.Category.Id;
+        //    editableDish.Id = 0;
+
+        //    _context.Dishes.Add(editableDish);
+        //    _context.SaveChanges();
+        //    return new OperationResult(true, "Блюдо изменено");
+        //}
         public OperationResult AddToMenu(DishDTO dish)
         {
             var dishEntity = _context.Dishes

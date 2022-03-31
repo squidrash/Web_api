@@ -28,7 +28,7 @@ namespace Web_api_pizza
                 .ForMember(dto => dto.Category, opt => opt.MapFrom(en => en.Dish.Category))
                 .ForMember(dto => dto.IsActive, opt => opt.MapFrom(en => en.Dish.IsActive))
                 .ForMember(dto => dto.Description, opt => opt.MapFrom(en => en.Dish.Description))
-                .ForMember(dto => dto.ShortDescription, opt => opt.MapFrom(en => en.Dish.ShortDescription));
+                .ForMember(dto => dto.Image, opt => opt.MapFrom(en => en.Dish.Image));
             CreateMap<AddressOrderEntity, AddressDTO>()
                 .ForMember(dto => dto.Id, opt => opt.MapFrom(en => en.Address.Id))
                 .ForMember(dto => dto.City, opt => opt.MapFrom(en => en.Address.City))

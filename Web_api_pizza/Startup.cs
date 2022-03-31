@@ -53,6 +53,11 @@ namespace Web_api_pizza
             services.AddTransient<IOrderService, OrderService>();
             services.AddTransient<ISpecialOfferService, SpecialOfferService>();
             services.AddTransient<IDishCategoryService, DishCategoryService>();
+            services.AddTransient<IDishImageService, DishImageService>();
+
+            var imageDirPath = Configuration.GetSection("ImagesServiceOptions");
+            services.Configure<ImagesServiceOptions>(imageDirPath);
+
             services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
             {
                 builder.AllowAnyOrigin()

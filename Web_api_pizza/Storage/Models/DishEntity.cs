@@ -24,7 +24,7 @@ namespace Web_api_pizza.Storage.Models
         public DishCategoryEntity Category { get; set; }
 
         public string Description { get; set; }
-        public string ShortDescription { get; set; }
+        public string Image { get; set; }
 
 
         public List<SpecialOfferEntity> OfferMainDishes { get; set; }
