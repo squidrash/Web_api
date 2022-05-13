@@ -28,7 +28,8 @@ namespace Web_api_pizza.Storage.DTO
         public int Discount { get; set; }
 
         //блюда участвующие в акции
-        public DishDTO MainDish { get; set; }
+        //public DishDTO MainDish { get; set; }
+        public MainDishDTO MainDish { get; set; }
 
         //число блюд необходимо для акций типа 1+1=3 и блюдо в подарок
         public int RequiredNumberOfDish;
@@ -37,9 +38,13 @@ namespace Web_api_pizza.Storage.DTO
         public int NumberOfExtraDish;
 
         //доп блюдо
-        public DishDTO ExtraDish { get; set; }
+        //public DishDTO ExtraDish { get; set; }
+        public MainDishDTO ExtraDish { get; set; }
 
         //минимальная сумма заказа для акции типа GeneralDiscount
         public decimal MinOrderAmount { get; set; }
+
+        public string Image { get; set; }
+
     }
 }

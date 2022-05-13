@@ -8,6 +8,6 @@ namespace Web_api_pizza.Storage.Enums
         Preparing,
         OnTheWay,
         Delivered,
-        Cancelled
+        Canceled
     }
 }
