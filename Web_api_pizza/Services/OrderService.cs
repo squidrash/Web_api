@@ -38,7 +38,7 @@ namespace Web_api_pizza.Services
             {"Preparing", OrderStatusEnum.Preparing },
             {"OnTheWay", OrderStatusEnum.OnTheWay},
             {"Delivered", OrderStatusEnum.Delivered},
-            {"Cancelled", OrderStatusEnum.Cancelled}
+            {"Canceled", OrderStatusEnum.Canceled}
         };
 
         //поменял когда делал сайт
@@ -49,16 +49,16 @@ namespace Web_api_pizza.Services
         //    {"Готовится", OrderStatusEnum.Preparing },
         //    {"В пути", OrderStatusEnum.OnTheWay},
         //    {"Доставлен", OrderStatusEnum.Delivered},
-        //    {"Отменен", OrderStatusEnum.Cancelled}
+        //    {"Отменен", OrderStatusEnum.Canceled}
         //};
         private readonly Dictionary<OrderStatusEnum,IEnumerable<OrderStatusEnum>> _statusChangeRule = new Dictionary<OrderStatusEnum, IEnumerable<OrderStatusEnum>>
         {
-            { OrderStatusEnum.New, new[]{ OrderStatusEnum.Confirmed, OrderStatusEnum.Cancelled } },
+            { OrderStatusEnum.New, new[]{ OrderStatusEnum.Confirmed, OrderStatusEnum.Canceled } },
             { OrderStatusEnum.Confirmed, new[]{ OrderStatusEnum.Preparing } },
             { OrderStatusEnum.Preparing, new[]{ OrderStatusEnum.OnTheWay } },
             { OrderStatusEnum.OnTheWay, new[]{ OrderStatusEnum.Delivered } },
             { OrderStatusEnum.Delivered, new OrderStatusEnum[] { } },
-            { OrderStatusEnum.Cancelled, new OrderStatusEnum[] { } },
+            { OrderStatusEnum.Canceled, new OrderStatusEnum[] { } },
         };
         //поменял когда делал сайт
         //private readonly List<string> StatusList = new List<string>()
@@ -67,7 +67,7 @@ namespace Web_api_pizza.Services
         //};
         private readonly List<string> StatusList = new List<string>()
         {
-            "New","Confirmed","Preparing","OnTheWay","Delivered","Cancelled"
+            "New","Confirmed","Preparing","OnTheWay","Delivered","Canceled"
         };
 
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0)

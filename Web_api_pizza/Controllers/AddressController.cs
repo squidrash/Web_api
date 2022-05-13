@@ -33,6 +33,37 @@ namespace Web_api_pizza.Controllers
             return Ok(address);
         }
 
+        [HttpPost("find")]
+        public IActionResult FindAddress(AddressDTO address)
+        {
+            if(address.City == null)
+            {
+                ModelState.AddModelError("City", "Не указан город");
+
+            }
+            if (address.Street == null)
+            {
+                ModelState.AddModelError("Street", "Не указана улица");
+            }
+            if (address.NumberOfBuild == null)
+            {
+                ModelState.AddModelError("Build", "Не указан дом");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = _addressService.FindAddress(address);
+
+            if(result == null)
+            {
+                return NotFound("Адрес не найден");
+            }
+            
+            return Ok(result);
+        }
+
         
         [HttpPost("Create")]
         public IActionResult CreateAddress(AddressDTO address)

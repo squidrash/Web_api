@@ -43,5 +43,8 @@ namespace Web_api_pizza.Storage.DTO
 
         //минимальная сумма заказа для акции типа GeneralDiscount
         public decimal MinOrderAmount { get; set; }
+
+        public string Image { get; set; }
+
     }
 }

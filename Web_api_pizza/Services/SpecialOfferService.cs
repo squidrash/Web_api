@@ -53,6 +53,7 @@ namespace Web_api_pizza.Services
             var specialOffers = _context.Offers
                 .Include(so => so.MainDish)
                 .Include(so => so.ExtraDish)
+                .OrderBy(so => so.Id)
                 .AsQueryable();
 
             specialOffers = filter.Filters(specialOffers);
@@ -224,7 +225,7 @@ namespace Web_api_pizza.Services
         {
             Console.WriteLine("скидка");
             var result = new OperationResult(false);
-            if (specialOffer.Discount < 5 || specialOffer.Discount > 20)
+            if (specialOffer.Discount < 0 || specialOffer.Discount > 20)
             {
                 result.Message = $"Недопустимый размер скидки — \"{specialOffer.Discount}%\"";
                 return result;
