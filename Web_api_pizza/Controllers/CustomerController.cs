@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Web_api_pizza.Filters;
 using Web_api_pizza.Services;
 using Web_api_pizza.Storage.DTO;
 
@@ -17,9 +18,9 @@ namespace Web_api_pizza.Controllers
         }
 
         [HttpGet("getAll")]
-        public IActionResult GetAllCustomers()
+        public IActionResult GetAllCustomers([FromQuery] CustomerFilter filter)
         {
-            var customers =_customerService.GetAllCustomers();
+            var customers =_customerService.GetAllCustomers(filter);
             return Ok(customers);
         }
 

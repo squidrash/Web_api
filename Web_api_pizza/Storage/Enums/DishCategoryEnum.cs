@@ -1,5 +1,4 @@
-﻿using System;
-namespace Web_api_pizza.Storage.Enums
+﻿namespace Web_api_pizza.Storage.Enums
 {
     public enum DishCategoryEnum
     {

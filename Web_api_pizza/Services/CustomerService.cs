@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Web_api_pizza.Filters;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Models;
 
@@ -10,7 +11,7 @@ namespace Web_api_pizza.Services
 {
     public interface ICustomerService
     {
-        public List<CustomerDTO> GetAllCustomers();
+        public List<CustomerDTO> GetAllCustomers(CustomerFilter filter);
         public PersonDTO GetOneCustomer(int id);
 
         //получаем клиента со всеми данныйми(заказы, адреса)
@@ -45,12 +46,16 @@ namespace Web_api_pizza.Services
             _mapper = mapper;
             _addressService = addressService;
         }
-        public List<CustomerDTO> GetAllCustomers()
+        public List<CustomerDTO> GetAllCustomers(CustomerFilter filter)
         {
-            var customersEntity = _context.Customers
+            var customers = _context.Customers
                 .OrderBy(c => c.Name)
                 .ThenBy(c => c.LastName)
-                .ToList();
+                .AsQueryable();
+
+            customers = filter.Filters(customers);
+            var customersEntity = customers.ToList();
+
             var customersDTO = _mapper.Map<List<CustomerEntity>, List<CustomerDTO>>(customersEntity);
             return customersDTO;
         }
