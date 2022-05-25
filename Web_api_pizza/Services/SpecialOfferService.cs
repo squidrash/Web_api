@@ -4,6 +4,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
+using Web_api_pizza.SpecialOfferFactory;
 using Web_api_pizza.SpecialOfferStrategy;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
@@ -169,6 +170,12 @@ namespace Web_api_pizza.Services
             return message;
         }
 
+        private readonly Dictionary<TypeOfferEnum, StrategyFactory> StrategyFactoryDic = new Dictionary<TypeOfferEnum, StrategyFactory>
+        {
+            { TypeOfferEnum.GeneralDiscount, new GeneralDiscountCreator() },
+            { TypeOfferEnum.ExtraDish, new ExtraDishCreator() },
+            { TypeOfferEnum.ThreeForPriceTwo, new ThreeForPriceTwoCreator() }
+        };
         //public ResultOfferCheck CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
@@ -178,47 +185,16 @@ namespace Web_api_pizza.Services
             {
                 return new OperationResult(false, "Акции с таким промокодом не существует");
             }
-            var complianceContext = new ComplianceContext();
 
-            switch (specialOfferEntity.TypeOffer)
-            {
-                case TypeOfferEnum.GeneralDiscount:
-                    complianceContext.SetStrategy(new GeneralDiscountStrategy());
-                    break;
-                case TypeOfferEnum.ExtraDish:
-                    complianceContext.SetStrategy(new ExtraDishStrategy());
-                    break;
-                case TypeOfferEnum.ThreeForPriceTwo:
-                    complianceContext.SetStrategy(new ThreeForPriceTwoStrategy());
-                    break;
-            }
+            var strategyContext = StrategyFactoryDic[specialOfferEntity.TypeOffer].CreateStrategy();
+            var complianceResult = strategyContext.CheckComplianceSpecialOffer(dishes, specialOfferEntity);
 
-            //доп проверка
-            //var dishesKek = _context.Dishes
-            //    .Where(x => dishes.Select(y => y.Id.Value).Contains(x.Id))
-            //    .ToList();
-
-            //var dishesLol = dishesKek.Select(x =>
-            //{
-            //    var quantity = dishes.Where(d => d.Id == x.Id)
-            //                         .Select(y => y.Quantity > 0 ? y.Quantity : 1)
-            //                         .First();
-            //    return new DishDTO
-            //    {
-            //        ProductName = x.ProductName,
-            //        Quantity = quantity,
-            //        Price = x.Price
-            //    };
-            //}).ToList();
-
-
-            var result = complianceContext.DoSomeBusinessLogic(dishes, specialOfferEntity);
-            if (result == -1)
+            if (complianceResult == -1)
             {
                 return new OperationResult(false, "Не соответствует условиям акции");
             }
 
-            return new ResultOfferCheck(true, "Промокод применен", result);
+            return new ResultOfferCheck(true, "Промокод применен", complianceResult);
         }
 
         private OperationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)

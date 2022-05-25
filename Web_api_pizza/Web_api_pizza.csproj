@@ -26,10 +26,12 @@
     <Folder Include="Migrations\" />
     <Folder Include="Filters\" />
     <Folder Include="SpecialOfferStrategy\" />
+    <Folder Include="SpecialOfferFactory\" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Services\OrderTemolates\" />
     <None Remove="SpecialOfferStrategy\" />
+    <None Remove="SpecialOfferFactory\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Services\OrderStrategy\OrderContext.cs" />
