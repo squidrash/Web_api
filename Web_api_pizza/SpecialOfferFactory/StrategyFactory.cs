@@ -10,10 +10,10 @@ namespace Web_api_pizza.SpecialOfferFactory
 
         public ComplianceContext CreateStrategy()
         {
-            var context = new ComplianceContext();
+            var strategyContext = ComplianceContext.GetInstance();
             var product = FactotyMethod();
-            context.SetStrategy(product);
-            return context;
+            strategyContext.SetStrategy(product);
+            return strategyContext;
             
         }
 

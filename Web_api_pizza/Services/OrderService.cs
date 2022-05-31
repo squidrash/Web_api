@@ -79,7 +79,7 @@ namespace Web_api_pizza.Services
                     .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
                     .ThenInclude(a => a.Address)
-                .OrderByDescending(o => o)
+                .OrderByDescending(o => o.CreateTime)
                 .AsQueryable();
 
             if (customerId != 0)
@@ -90,8 +90,7 @@ namespace Web_api_pizza.Services
             orders = filter.Filters(orders);
             
 
-            List<OrderEntity> ordersEntity;
-            ordersEntity = orders.OrderByDescending(o => o.CreateTime).ToList();
+            List<OrderEntity> ordersEntity = orders.ToList();
 
             //Console.WriteLine("Это объект из базы");
             //foreach (var o in ordersEntity)
