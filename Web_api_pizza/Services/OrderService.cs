@@ -4,6 +4,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
+using Web_api_pizza.OrderObserver;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
@@ -24,11 +25,13 @@ namespace Web_api_pizza.Services
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
         private readonly ISpecialOfferService _offer;
-        public OrderService(IMapper mapper, PizzaDbContext context, ISpecialOfferService offer)
+        private readonly ISubject _subject;
+        public OrderService(IMapper mapper, PizzaDbContext context, ISpecialOfferService offer, ISubject subject)
         {
             _mapper = mapper;
             _context = context;
             _offer = offer;
+            _subject = subject;
         }
 
         private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
@@ -208,6 +211,8 @@ namespace Web_api_pizza.Services
             }
 
             _context.SaveChanges();
+
+            _subject.Notify();
 
             string message = "Заказ создан";
             return message;

@@ -27,11 +27,13 @@
     <Folder Include="Filters\" />
     <Folder Include="SpecialOfferStrategy\" />
     <Folder Include="SpecialOfferFactory\" />
+    <Folder Include="OrderObserver\" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Services\OrderTemolates\" />
     <None Remove="SpecialOfferStrategy\" />
     <None Remove="SpecialOfferFactory\" />
+    <None Remove="OrderObserver\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Services\OrderStrategy\OrderContext.cs" />
