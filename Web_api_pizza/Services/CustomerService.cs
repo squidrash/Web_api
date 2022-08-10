@@ -4,6 +4,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
+using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Models;
 
@@ -11,27 +12,67 @@ namespace Web_api_pizza.Services
 {
     public interface ICustomerService
     {
+        /// <summary>
+        /// Получение списка пользователей
+        /// </summary>
+        /// <param name="filter">Опциональный параметр с фильтрами по имени, фамилии, телефону</param>
+        /// <see cref="CustomerFilter"/>
+        /// <returns>Список пользователей</returns>
         public List<CustomerDTO> GetAllCustomers(CustomerFilter filter);
+
+        /// <summary>
+        /// Получение личных данных пользователя
+        /// </summary>
+        /// <param name="id"> Id пользователя</param>
+        /// <returns>Личные данные конкретного пользователя</returns>
         public PersonDTO GetOneCustomer(int id);
 
-        //получаем клиента со всеми данныйми(заказы, адреса)
+        /// <summary>
+        /// Получение данных пользователя, включая данные заказов и адреса доставки
+        /// </summary>
+        /// <param name="id">Id пользователя</param>
+        /// <returns>Данные конкретного пользователя</returns>
         public CustomerDTO GetCustomerWithAllInfo(int id);
 
-        public string RegistrationCustomer(CustomerDTO customer);
+        /// <summary>
+        /// Добавление пользователя в БД
+        /// </summary>
+        /// <param name="customer">Пользователь в виде объекта CustomerDTO</param>
+        /// <see cref="CustomerDTO"/>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        public OperationResult RegistrationCustomer(CustomerDTO customer);
 
-        //Регистируем сразу несколько пользователей
-        //public void RegistrationManyCustomers(List<CustomerDTO> customers)
+        /// <summary>
+        /// Удаление пользователя
+        /// </summary>
+        /// <param name="id">Id пользователя</param>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        public OperationResult DeleteCustomer(int id);
 
-        public string DeleteCustomer(int id);
+        /// <summary>
+        /// Изменение данных пользователя
+        /// </summary>
+        /// <param name="customer">Пользователь в виде объекта CustomerDTO</param>
+        /// <see cref="CustomerDTO"/>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        public OperationResult EditCustomer(CustomerDTO customer);
 
-        //удалить сразу несколько
-        //public void DeleteManyCustomers(int[] customersId);
+        /// <summary>
+        /// Создание связи пользователь-адрес в БД
+        /// </summary>
+        /// <param name="customerId">Id пользователя</param>
+        /// <param name="address">Адрес в виде объекта AddressDTO</param>
+        /// <see cref="AddressDTO"/>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        public OperationResult CreateCustomerAddress(int customerId, AddressDTO address);
 
-        public string EditCustomer(CustomerDTO customer);
-
-        public string CreateCustomerAddress(int customerId, AddressDTO address);
-        public string EditCustomerAddress(int customerId, int oldAddressId, AddressDTO newAddress);
-        public string RemoveCustomerAddress(int customerId, int addressId);
+        /// <summary>
+        /// Удаление связи пользователь-адрес в БД
+        /// </summary>
+        /// <param name="customerId">Id пользователя</param>
+        /// <param name="addressId">Id адреса</param>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        public OperationResult RemoveCustomerAddress(int customerId, int addressId);
 
     }
     public class CustomerService : ICustomerService
@@ -88,182 +129,140 @@ namespace Web_api_pizza.Services
             return customerDTO;
         }
 
-        public string RegistrationCustomer(CustomerDTO customer)
+        public OperationResult RegistrationCustomer(CustomerDTO customer)
         {
             customer.Id = 0;
             if (customer.Discount == null)
             {
                 customer.Discount = 0;
             }
-            string message;
+            
             var checkCustomer = _context.Customers
-                .Where(c => c.Name == customer.Name)
-                .Where(c => c.LastName == customer.LastName)
-                .Where(c => c.Phone == customer.Phone)
-                .FirstOrDefault();
-            if (checkCustomer == null)
-            {
-                var customerEntity = _mapper.Map<CustomerDTO, CustomerEntity>(customer);
-                _context.Customers.Add(customerEntity);
+                .FirstOrDefault(c => c.Name == customer.Name
+                    && c.LastName == customer.LastName
+                    && c.Phone == customer.Phone);
 
-                _context.SaveChanges();
-                message = "Пользователь зарегистрирован";
-            }
-            else
+            var result = new OperationResult(false);
+            if(checkCustomer != null)
             {
-                message = "Пользователь уже существует";
+                result.Message = "Пользователь уже существует";
+                return result;
             }
-            return message;
-        }
 
-        public void RegistrationManyCustomers(List<CustomerDTO> customers)
-        {
-            var customersEntities = _mapper.Map<List<CustomerDTO>, List<CustomerEntity>>(customers);
-            foreach (var customer in customersEntities)
-            {
-                var checkCustomer = _context.Customers
-                .Where(c => c.Name == customer.Name)
-                .Where(c => c.LastName == customer.LastName)
-                .Where(c => c.Phone == customer.Phone)
-                .FirstOrDefault();
-                if (checkCustomer == null)
-                {
-                    _context.Customers.Add(customer);
-                }
-            }
+            var customerEntity = _mapper.Map<CustomerDTO, CustomerEntity>(customer);
+            _context.Customers.Add(customerEntity);
+
             _context.SaveChanges();
+            result.IsSuccess = true;
+            result.Message = "Пользователь зарегистрирован";
+            
+            return result;
         }
 
-        public string DeleteCustomer(int id)
+        public OperationResult DeleteCustomer(int id)
         {
-            string message;
-            var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == id);
+            var removableCustomer = _context.Customers
+                .FirstOrDefault(c => c.Id == id);
 
             if (removableCustomer == null)
             {
-                message = null;
-                return message;
+                return null;
             }
 
             _context.Customers.Remove(removableCustomer);
             _context.SaveChanges();
-            message = "Пользователь удален";
-            return message;
+            var result = new OperationResult(true, "Пользователь удален");
+            return result;
         }
 
-        public void DeleteManyCustomers(int[] customersId)
-        {
-            foreach (var cId in customersId)
-            {
-                var removableCustomer = _context.Customers.FirstOrDefault(c => c.Id == cId);
-                _context.Customers.Remove(removableCustomer);
-            }
-            _context.SaveChanges();
-        }
 
-        public string EditCustomer(CustomerDTO customer)
+        public OperationResult EditCustomer(CustomerDTO customer)
         {
-            string message;
+            
             var infoCustomer = _context.Customers
             .FirstOrDefault(c => c.Id == customer.Id);
             if (infoCustomer == null)
             {
-                message = null;
-                return message;
+                return null;
             }
+
+            var result = new OperationResult(false);
+
             if (infoCustomer.Name == customer.Name &&
             infoCustomer.LastName == customer.LastName &&
             infoCustomer.Phone == customer.Phone &&
             infoCustomer.Discount == customer.Discount)
             {
-                message = "что изменять то?";
-                return message;
+                result.Message = "Нет данных для изменения";
+                return result;
             }
 
             infoCustomer.Name = customer.Name;
             infoCustomer.LastName = customer.LastName;
             infoCustomer.Phone = customer.Phone;
             infoCustomer.Discount = customer.Discount;
+
             _context.SaveChanges();
-            message = "Пользователь изменен";
-            return message;
+
+            result.IsSuccess = true;
+            result.Message = "Данные пользователя изменены";
+            return result;
         }
 
-        public string CreateCustomerAddress(int customerId, AddressDTO address)
+        public OperationResult CreateCustomerAddress(int customerId, AddressDTO address)
         {
-            string message;
+            var result = new OperationResult(false);
+
+            var customerEntity = _context.Customers
+                .FirstOrDefault(c => c.Id == customerId);
+            if(customerEntity == null)
+            {
+                result.Message = "Пользователь не найден";
+                return result;
+            }
             var findAddress = FindAddress(address);
             if(findAddress == null)
             {
-                message = null;
-                return message;
+                result.Message = "Адрес не найден";
+                return result;
             }
 
             var checkCustomerAddress = CheckCustomerAddress(customerId, findAddress.Id);
-            
-            if (checkCustomerAddress == null)
+
+            if(checkCustomerAddress != null)
             {
-                var customerAddress = new CustomerAddressEntity { AddressEntityId = findAddress.Id, CustomerEntityId = customerId };
-                _context.CustomerAddressEntities.Add(customerAddress);
-                _context.SaveChanges();
-                //ненужное сообщение для клиента
-                //только для проверки
-                //удалить после тестирования
-                message = "Связь между пользователем и адресом создана";
+                result.Message = "Связь между пользователем и адресом уже существует";
+                return result;
             }
-            //ненужное сообщение для клиента
-            //только для проверки
-            //удалить после тестирования
-            else
-            {
-                message = "Связь между пользователем и адресом уже существует";
-            }
-            return message;
+
+            var customerAddress = new CustomerAddressEntity { AddressEntityId = findAddress.Id, CustomerEntityId = customerId };
+            _context.CustomerAddressEntities.Add(customerAddress);
+            _context.SaveChanges();
+
+            result.IsSuccess = true;
+            result.Message = "Связь между пользователем и адресом создана";
             
+            return result;
         }
 
-        public string RemoveCustomerAddress(int customerId, int addressId)
+        public OperationResult RemoveCustomerAddress(int customerId, int addressId)
         {
-            string message;
             var checkCustomerAddress = CheckCustomerAddress(customerId, addressId);
+
             if(checkCustomerAddress == null)
             {
-                message = null;
-                return message;
+                return null;
             }
+
             _context.CustomerAddressEntities.Remove(checkCustomerAddress);
             _context.SaveChanges();
-            message = "Связь удалена";
-            return message;
-        }
 
-        public string EditCustomerAddress(int customerId, int oldAddressId, AddressDTO newAddress)
-        {
-            string message;
-            var findAddress = FindAddress(newAddress);
-            if (findAddress == null)
-            {
-                message = "nullNewAddress";
-                return message;
-            }
-
-            var checkCustomerAddress = CheckCustomerAddress(customerId, oldAddressId);
-
-            if (checkCustomerAddress == null)
-            {
-                message = "nullCustomerAddress";
-                return message;
-            }
-            checkCustomerAddress.AddressEntityId = findAddress.Id;
-            _context.SaveChanges();
-            message = "Адрес изменен";
-            return message;
+            var result = new OperationResult(true, "Связь удалена");
+            return result;
         }
 
         private AddressEntity FindAddress(AddressDTO address)
         {
-            //нужно ли вызывать этот метод из сервиса
-            //или лучше прописать локально?
             var findAddress = _addressService.FindAddress(address);
             return findAddress;
         }

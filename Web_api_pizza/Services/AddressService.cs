@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AutoMapper;
+using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Models;
 
@@ -8,10 +9,43 @@ namespace Web_api_pizza.Services
 { 
     public interface IAddressService
     {
+        /// <summary>
+        /// Получение адреса по Id
+        /// </summary>
+        /// <param name="id">Id адреса</param>
+        /// <returns>адрес в виде объекта класса AddressDTO</returns>
+        /// <see cref="AddressDTO"/>
         public AddressDTO GetDeliveryAddress(int id);
-        public string CreateDeliveryAddress(AddressDTO address);
-        public string EditDeliveryAddress(AddressDTO address);
-        public string RemoveDeliveryAddress(int id);
+
+        /// <summary>
+        /// Добавление нового адреса в БД
+        /// </summary>
+        /// <param name="address">адрес в виде объекта класса AddressDTO</param>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        /// <see cref="AddressDTO"/>
+        public OperationResult CreateDeliveryAddress(AddressDTO address);
+
+        /// <summary>
+        /// Изменение данных адреса
+        /// </summary>
+        /// <param name="address">адрес в виде объекта класса AddressDTO</param>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        /// <see cref="AddressDTO"/>
+        public OperationResult EditDeliveryAddress(AddressDTO address);
+
+        /// <summary>
+        /// Удаление адреса из БД
+        /// </summary>
+        /// <param name="id">Id адреса</param>
+        /// <returns>Результат операции в виде объекта OperationResult(bool результат операции , сообщение)</returns>
+        public OperationResult RemoveDeliveryAddress(int id);
+
+        /// <summary>
+        /// Метод поиска адреса по городу, улице, дому...
+        /// </summary>
+        /// <param name="address">объект класса AddressDTO</param>
+        /// <returns>адрес в виде объекта класса AddressDTO</returns>
+        /// <see cref="AddressDTO"/>
         public AddressEntity FindAddress(AddressDTO address);
     }
     public class AddressService : IAddressService
@@ -30,28 +64,29 @@ namespace Web_api_pizza.Services
                 var addressDTO = _mapper.Map<AddressEntity, AddressDTO>(addressEntity);
                 return addressDTO;
         }
-        public string CreateDeliveryAddress(AddressDTO address)
+        
+        public OperationResult CreateDeliveryAddress(AddressDTO address)
         {
             address.Id = 0;
-            string message;
+            var result = new OperationResult(false);
             var checkAddress = FindAddress(address);
             if (checkAddress == null)
             {
                 var addressEntity = _mapper.Map<AddressDTO, AddressEntity>(address);
                 _context.Addresses.Add(addressEntity);
                 _context.SaveChanges();
-                message = "Адрес добавлен";
+                result.IsSuccess = true;
+
+                result.Message = "Адрес добавлен";
             }
-            //ненужное сообщение для клиента
-            //только для проверки
-            //удалить после тестирования
             else
             { 
-                message = "Адрес уже есть в базе";
+                result.Message = "Адрес уже есть в базе";
             }
-            return message;
+            return result;
         }
-        public AddressEntity FindAddress(AddressDTO address)
+
+                public AddressEntity FindAddress(AddressDTO address)
         {
             var findAddress = _context.Addresses
                 .Where(a => a.City == address.City)
@@ -63,23 +98,23 @@ namespace Web_api_pizza.Services
             return findAddress;
         }
 
-        public string EditDeliveryAddress(AddressDTO address)
+        public OperationResult EditDeliveryAddress(AddressDTO address)
         {
-            string message;
             var editableAddress = _context.Addresses.FirstOrDefault(a => a.Id == address.Id);
             if(editableAddress == null)
             {
-                message = null;
-                return message;
+                return null;
             }
+
+            var result = new OperationResult(false);
             if(editableAddress.City == address.City &&
             editableAddress.Street == address.Street &&
             editableAddress.NumberOfBuild == address.NumberOfBuild &&
             editableAddress.NumberOfEntrance == address.NumberOfEntrance &&
             editableAddress.Apartment == address.Apartment)
             {
-                message = "что изменять то?";
-                return message;
+                result.Message = "Нет данных для изменения";
+                return result;
             }
             editableAddress.City = address.City;
             editableAddress.Street = address.Street;
@@ -88,23 +123,23 @@ namespace Web_api_pizza.Services
             editableAddress.Apartment = address.Apartment;
 
             _context.SaveChanges();
-            message = "Адрес изменен";
-            return message;
+
+            result.IsSuccess = true;
+            result.Message = "Адрес изменен";
+            return result;
         }
 
-        public string RemoveDeliveryAddress(int id)
+        public OperationResult RemoveDeliveryAddress(int id)
         {
             var removableAddress = _context.Addresses.FirstOrDefault(a => a.Id == id);
-            string message;
             if(removableAddress == null)
             {
-                message = null;
-                return message;
+                return null;
             }
             _context.Addresses.Remove(removableAddress);
             _context.SaveChanges();
-            message = "Адрес удален";
-            return message;
+            var result = new OperationResult(true, "Адрес удален");
+            return result;
         }
     }
 }

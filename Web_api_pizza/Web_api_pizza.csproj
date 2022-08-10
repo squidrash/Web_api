@@ -26,10 +26,20 @@
     <Folder Include="Migrations\" />
     <Folder Include="Filters\" />
     <Folder Include="SpecialOfferStrategy\" />
+    <Folder Include="SpecialOfferFactory\" />
+    <Folder Include="OrderObserver\" />
+    <Folder Include="ValidationOfferStrategy\" />
+    <Folder Include="ValidationOfferStrategy\Adapter\" />
+    <Folder Include="ValidationOfferStrategy\TemplateMethod\" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="Services\OrderTemolates\" />
     <None Remove="SpecialOfferStrategy\" />
+    <None Remove="SpecialOfferFactory\" />
+    <None Remove="OrderObserver\" />
+    <None Remove="ValidateOfferStrategy\" />
+    <None Remove="ValidationOfferStrategy\Adapter\" />
+    <None Remove="ValidationOfferStrategy\TemplateMethod\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Services\OrderStrategy\OrderContext.cs" />

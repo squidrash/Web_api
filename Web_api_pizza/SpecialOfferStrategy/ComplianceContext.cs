@@ -6,27 +6,33 @@ using Web_api_pizza.Storage.Models;
 
 namespace Web_api_pizza.SpecialOfferStrategy
 {
-    public class ComplianceContext
+    public sealed class ComplianceContext 
     {
-        private IComplianceSpecialOfferStrategy _strategy;
 
-        public ComplianceContext()
-        { }
+        private ComplianceContext() { }
 
-        public ComplianceContext(IComplianceSpecialOfferStrategy strategy)
+        private static ComplianceContext _instance;
+
+        public static ComplianceContext GetInstance()
         {
-            _strategy = strategy;
+            if(_instance == null)
+            {
+                _instance = new ComplianceContext();
+            }
+            return _instance;
         }
+
+
+        private IComplianceSpecialOfferStrategy _strategy;
 
         public void SetStrategy(IComplianceSpecialOfferStrategy strategy)
         {
             _strategy = strategy;
         }
 
-        public decimal DoSomeBusinessLogic(List<DishDTO> dishes, SpecialOfferEntity offer)
+        public decimal CheckComplianceSpecialOffer(List<DishDTO> dishes, SpecialOfferEntity specialOffer)
         {
-            var result = _strategy.CheckComplianceSpecialOffer(dishes, offer);
-            return result;
+            return _strategy.CheckComplianceSpecialOffer(dishes, specialOffer);
         }
     }
 }

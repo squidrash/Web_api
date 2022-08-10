@@ -4,25 +4,62 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
-using Web_api_pizza.SpecialOfferStrategy;
+using Web_api_pizza.SpecialOfferFactory;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
 using Web_api_pizza.Storage.Models;
+using Web_api_pizza.ValidateOfferStrategy;
+using Web_api_pizza.ValidationOfferStrategy;
+using Web_api_pizza.ValidationOfferStrategy.Adapter;
+using Web_api_pizza.ValidationOfferStrategy.TemplateMethod;
 
 namespace Web_api_pizza.Services
 {
     public interface ISpecialOfferService
     {
+        /// <summary>
+        /// Получение данных конкретной акции
+        /// </summary>
+        /// <param name="id"> Id акции</param>
+        /// <returns>Конкретную акцию</returns>
         public SpecialOfferDTO GetSpecialOffer(int id);
-        public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter);
-        public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
-        public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
-        public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
-        //public ResultOfferCheck CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
-        //public OperationResultWithData<decimal> CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
 
-        public string DeleteSpecialOffer(int specialOfferId);
+        /// <summary>
+        /// Получения списка акций
+        /// </summary>
+        /// <param name="filter">Опциональный параметр. Фильтрация по типу акции</param>
+        /// <returns>Список акций</returns>
+        public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter);
+
+        /// <summary>
+        /// Добавление новой акции
+        /// </summary>
+        /// <param name="specialOffer">Данные акции</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
+
+        /// <summary>
+        /// Изменение данных акции
+        /// </summary>
+        /// <param name="specialOffer">Данные акции</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
+
+        /// <summary>
+        /// Проверка соответствия списка блюд условиям акции
+        /// </summary>
+        /// <param name="dishes">Список проверяемых блюд</param>
+        /// <param name="promoCode">промокод акции по которой будет проводиться проверка</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
+
+        /// <summary>
+        /// Удаление акции
+        /// </summary>
+        /// <param name="specialOfferId">Id акции</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult DeleteSpecialOffer(int specialOfferId);
     }
 
     public class SpecialOfferService : ISpecialOfferService
@@ -39,10 +76,9 @@ namespace Web_api_pizza.Services
         public SpecialOfferDTO GetSpecialOffer(int id)
         {
             var specialOffer = _context.Offers
-                .Where(so => so.Id == id)
                 .Include(so => so.MainDish)
                 .Include(so => so.ExtraDish)
-                .FirstOrDefault();
+                .FirstOrDefault(so => so.Id == id);
             var specialOfferDTO = _mapper.Map<SpecialOfferDTO>(specialOffer);
             return specialOfferDTO;
 
@@ -69,44 +105,28 @@ namespace Web_api_pizza.Services
             var result = new OperationResult(false);
 
             var specialOfferEntity = _context.Offers
-                .Where(x => x.PromoCode == specialOffer.PromoCode)
-                .FirstOrDefault();
+                .FirstOrDefault(x => x.PromoCode == specialOffer.PromoCode);
+
             if (specialOfferEntity != null)
             {
                 result.Message = "Акция с таким промокодом уже существует";
                 return result;
             }
-            
+
+            var validationResult = ValidateOffer(specialOffer);
+            if(validationResult.IsSuccess == false)
+            {
+                return validationResult;
+            }
+
             var newSpecialOffer = new SpecialOfferEntity();
 
-            if (specialOffer.TypeOffer == TypeOfferEnum.GeneralDiscount)
+            if (validationResult.MainDish != null && validationResult.ExtraDish != null)
             {
-
-                result = ValidateGeneralDiscount(specialOffer);
-                if (result.IsSuccess == false)
-                {
-                    return result;
-                }
+                newSpecialOffer.MainDishId = validationResult.MainDish.Id;
+                newSpecialOffer.ExtraDishId = validationResult.ExtraDish.Id;
             }
-            else
-            {
-                //в методе Edit повпоряется эта проверка
-                var mainDishEntity = _context.Dishes
-                    .Where(x => x.Id == specialOffer.MainDish.Id)
-                    .FirstOrDefault();
-                var extraDishEntity = _context.Dishes
-                .Where(x => x.Id == specialOffer.ExtraDish.Id)
-                .FirstOrDefault();
-
-                result = ValidateOffersWithDishes(specialOffer);
-
-                if (result.IsSuccess == false)
-                {
-                    return result;
-                }
-                newSpecialOffer.MainDishId = specialOffer.MainDish.Id;
-                newSpecialOffer.ExtraDishId = specialOffer.ExtraDish.Id;
-            }
+            
             newSpecialOffer = _mapper.Map(specialOffer, newSpecialOffer);
             _context.Offers.Add(newSpecialOffer);
             _context.SaveChanges();
@@ -117,34 +137,26 @@ namespace Web_api_pizza.Services
         public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer)
         {
             var specialOfferEntity = _context.Offers
-                .Where(so => so.Id == specialOffer.Id)
-                .FirstOrDefault();
+                .FirstOrDefault(so => so.Id == specialOffer.Id);
             if (specialOfferEntity == null)
                 return null;
 
             var result = new OperationResult(false);
 
-            if(specialOffer.TypeOffer == TypeOfferEnum.GeneralDiscount)
+            var validationResult = ValidateOffer(specialOffer);
+            if (validationResult.IsSuccess == false)
             {
-                result = ValidateGeneralDiscount(specialOffer);
-                if (result.IsSuccess == false)
-                {
-                    return result;
-                }
+                return validationResult;
             }
-            else
-            {
-                result = ValidateOffersWithDishes(specialOffer);
 
-                if (result.IsSuccess == false)
-                {
-                    return result;
-                }
-                specialOfferEntity.MainDishId = specialOffer.MainDish.Id;
-                specialOfferEntity.ExtraDishId = specialOffer.ExtraDish.Id;
+            if (validationResult.MainDish != null && validationResult.ExtraDish != null)
+            {
+                specialOfferEntity.MainDishId = validationResult.MainDish.Id;
+                specialOfferEntity.ExtraDishId = validationResult.ExtraDish.Id;
             }
 
             specialOfferEntity = _mapper.Map(specialOffer, specialOfferEntity);
+            
             _context.SaveChanges();
 
             result.IsSuccess = true;
@@ -152,24 +164,27 @@ namespace Web_api_pizza.Services
             return result;
         }
 
-        public string DeleteSpecialOffer(int specialOfferId)
+        public OperationResult DeleteSpecialOffer(int specialOfferId)
         {
-            string message;
-
             var specialOfferEntity = _context.Offers
-                .Where(so => so.Id == specialOfferId)
-                .FirstOrDefault();
+                .FirstOrDefault(so => so.Id == specialOfferId);
             if (specialOfferEntity == null)
                 return null;
 
             _context.Offers.Remove(specialOfferEntity);
             _context.SaveChanges();
 
-            message = "Акция удалена";
-            return message;
+            var result = new OperationResult(true, "Акция удалена");
+            return result;
         }
 
-        //public ResultOfferCheck CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
+        private readonly Dictionary<TypeOfferEnum, StrategyFactory> StrategyFactoryDic = new Dictionary<TypeOfferEnum, StrategyFactory>
+        {
+            { TypeOfferEnum.GeneralDiscount, new GeneralDiscountCreator() },
+            { TypeOfferEnum.ExtraDish, new ExtraDishCreator() },
+            { TypeOfferEnum.ThreeForPriceTwo, new ThreeForPriceTwoCreator() }
+        };
+
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
             var specialOfferEntity = _context.Offers
@@ -178,165 +193,61 @@ namespace Web_api_pizza.Services
             {
                 return new OperationResult(false, "Акции с таким промокодом не существует");
             }
-            var complianceContext = new ComplianceContext();
 
-            switch (specialOfferEntity.TypeOffer)
-            {
-                case TypeOfferEnum.GeneralDiscount:
-                    complianceContext.SetStrategy(new GeneralDiscountStrategy());
-                    break;
-                case TypeOfferEnum.ExtraDish:
-                    complianceContext.SetStrategy(new ExtraDishStrategy());
-                    break;
-                case TypeOfferEnum.ThreeForPriceTwo:
-                    complianceContext.SetStrategy(new ThreeForPriceTwoStrategy());
-                    break;
-            }
+            var strategyContext = StrategyFactoryDic[specialOfferEntity.TypeOffer].CreateStrategy();
+            var complianceResult = strategyContext.CheckComplianceSpecialOffer(dishes, specialOfferEntity);
 
-            //доп проверка
-            //var dishesKek = _context.Dishes
-            //    .Where(x => dishes.Select(y => y.Id.Value).Contains(x.Id))
-            //    .ToList();
-
-            //var dishesLol = dishesKek.Select(x =>
-            //{
-            //    var quantity = dishes.Where(d => d.Id == x.Id)
-            //                         .Select(y => y.Quantity > 0 ? y.Quantity : 1)
-            //                         .First();
-            //    return new DishDTO
-            //    {
-            //        ProductName = x.ProductName,
-            //        Quantity = quantity,
-            //        Price = x.Price
-            //    };
-            //}).ToList();
-
-
-            var result = complianceContext.DoSomeBusinessLogic(dishes, specialOfferEntity);
-            if (result == -1)
+            if (complianceResult == -1)
             {
                 return new OperationResult(false, "Не соответствует условиям акции");
             }
 
-            return new ResultOfferCheck(true, "Промокод применен", result);
+            return new ResultOfferCheck(true, "Промокод применен", complianceResult);
         }
 
-        private OperationResult ValidateGeneralDiscount(SpecialOfferDTO specialOffer)
+        private ResultOfferValidation ValidateOffer(SpecialOfferDTO specialOffer)
         {
-            Console.WriteLine("скидка");
-            var result = new OperationResult(false);
-            if (specialOffer.Discount < 0 || specialOffer.Discount > 20)
+            var operationResult = new OperationResult(false);
+
+            var validationContext = ValidationOfferContext.GetInstance();
+
+            IValidationOfferStrategy strategy;
+
+            switch (specialOffer.TypeOffer)
             {
-                result.Message = $"Недопустимый размер скидки — \"{specialOffer.Discount}%\"";
-                return result;
+                case TypeOfferEnum.GeneralDiscount:
+                    var adapteeStrategy = new ValidationGeneralDiscount();
+                    strategy = new ValidationStrategyAdapter(adapteeStrategy);
+                    break;
+                case TypeOfferEnum.ExtraDish:
+                    strategy = new ValidationExtraDishes();
+                    break;
+                case TypeOfferEnum.ThreeForPriceTwo:
+                    strategy = new ValidationThreeForPriceTwo();
+                    break;
+                default:
+                    operationResult.Message = "Неизвестный тип акции";
+                    return (ResultOfferValidation)operationResult;
             }
 
-            Console.WriteLine("минимальная сумма");
-            if(specialOffer.MinOrderAmount <= 0)
+            DishEntity mainDish = null;
+            DishEntity extraDish = null;
+
+            var anyDishesOnOffer = specialOffer.MainDish != null && specialOffer.ExtraDish != null;
+
+            if (anyDishesOnOffer)
             {
-                result.Message = $"Не указана минимальная сумма заказа";
-                return result;
+                mainDish = _context.Dishes
+                   .FirstOrDefault(x => x.Id == specialOffer.MainDish.Id);
+
+                extraDish = _context.Dishes
+                   .FirstOrDefault(x => x.Id == specialOffer.ExtraDish.Id);
             }
+            validationContext.SetStrategy(strategy);
+            operationResult = validationContext.ValidateOffer(specialOffer, mainDish, extraDish);
 
-            Console.WriteLine("основное блюдо");
+            var result = new ResultOfferValidation(operationResult.IsSuccess, operationResult.Message, mainDish, extraDish);
 
-            if (specialOffer.MainDish != null)
-            {
-                result.Message = "В Акции типа \"GeneralDiscount\" недолжно быть основных блюд";
-                return result;
-            }
-
-
-            Console.WriteLine("доп блюда");
-
-            if (specialOffer.ExtraDish != null)
-            {
-                result.Message = "В Акции типа \"GeneralDiscount\" недолжно быть доп блюд";
-                return result;
-            }
-
-
-            Console.WriteLine("количество основных");
-
-            if (specialOffer.RequiredNumberOfDish != 0)
-            {
-                result.Message = "В Акции типа \"GeneralDiscount\" необходимое число блюд должно равняться 0";
-                return result;
-            }
-
-            Console.WriteLine("количество доп");
-
-            if (specialOffer.NumberOfExtraDish != 0)
-            {
-                result.Message = "В Акции типа \"GeneralDiscount\" число доп блюд должно равняться 0";
-                return result;
-            }
-            
-
-            result.IsSuccess = true;
-            result.Message = "Успешно";
-
-            return result;
-        }
-
-        private OperationResult ValidateOffersWithDishes(SpecialOfferDTO specialOffer)
-        {
-            var mainDish = _context.Dishes
-                    .Where(x => x.Id == specialOffer.MainDish.Id)
-                    .FirstOrDefault();
-            var extraDish = _context.Dishes
-                    .Where(x => x.Id == specialOffer.ExtraDish.Id)
-                    .FirstOrDefault();
-            var result = new OperationResult(false);
-            if(specialOffer.Discount != 0)
-            {
-                result.Message = $"Для акции типа {specialOffer.TypeOffer} не должно быть скидки";
-                return result;
-            }
-
-            if(specialOffer.MinOrderAmount != 0)
-            {
-                result.Message = $"Для акции типа {specialOffer.TypeOffer} не должно быть указана минимальная сумма";
-                return result;
-            }
-
-            if (specialOffer.MainDish == null || mainDish == null)
-            {
-                result.Message = "Список основных блюд не соответствует блюдам из БД";
-                return result;
-            }
-
-            if(specialOffer.TypeOffer == TypeOfferEnum.ThreeForPriceTwo)
-            {
-                if(specialOffer.MainDish.Id != specialOffer.ExtraDish.Id)
-                {
-                    result.Message = $"Для акции типа {specialOffer.TypeOffer} основное и доп блюдо должны быть одинаковыми";
-                    return result;
-                }
-            }
-            else
-            {
-                if (specialOffer.ExtraDish == null || extraDish == null)
-                {
-                    result.Message = "Дополнительное блюдо не соответствует блюдам из БД";
-                    return result;
-                }
-            }
-
-            if (specialOffer.RequiredNumberOfDish < 2 || specialOffer.RequiredNumberOfDish > 10)
-            {
-                result.Message = $"Недопустимое значение RequiredNumberOfDish - {specialOffer.RequiredNumberOfDish}";
-                return result;
-            }
-
-            if (specialOffer.NumberOfExtraDish < 1 || specialOffer.NumberOfExtraDish > 5)
-            {
-                result.Message = $"Недопустимое значение NumberOfExtraDish — {specialOffer.NumberOfExtraDish}";
-                return result;
-            }
-
-            result.IsSuccess = true;
-            result.Message = "Успешно";
             return result;
         }
     }

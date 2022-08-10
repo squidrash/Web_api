@@ -4,6 +4,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Web_api_pizza.Filters;
+using Web_api_pizza.OrderObserver;
 using Web_api_pizza.Storage;
 using Web_api_pizza.Storage.DTO;
 using Web_api_pizza.Storage.Enums;
@@ -13,22 +14,59 @@ namespace Web_api_pizza.Services
 {
     public interface IOrderService
     {
-        public OrderDTO GetOneOrder(int id);
-        public string ChangeOrderStatus(int orderId, string orderStatus);
-        public string CreateOrder(List<DishDTO> dishes, string promocode, int customerId = 0, int addressId = 0);
-        public string RemoveOrder(int id);
+        /// <summary>
+        /// Получение списка заказов
+        /// </summary>
+        /// <param name="filter">Опциональный параметр.
+        /// Фильтрация по статусу, наличию клиента и адреса</param>
+        /// <param name="customerId">Опциональный параметр. Id пользователя.</param>
+        /// <returns>Спиcок всех заказов или заказов конкреткого пользователя, если указан Id пользователя</returns>
         public List<OrderDTO> GetAllOrders(OrderFilter filter, int customerId = 0);
+
+        /// <summary>
+        /// Получение данных конкретного заказа
+        /// </summary>
+        /// <param name="id">Id заказа</param>
+        /// <returns>Данные конкретного заказа</returns>
+        public OrderDTO GetOneOrder(int id);
+
+        /// <summary>
+        /// Создание нового заказа
+        /// </summary>
+        /// <param name="dishes"> Список блюд которые входят в казаз</param>
+        /// <param name="promocode">Опциональный параметр. Промокод на скидку</param>
+        /// <param name="customerId">Опциональный параметр. Id пользователя, сделавшего заказ</param>
+        /// <param name="addressId">Опциональный параметр. Id адреса доставки</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult CreateOrder(List<DishDTO> dishes, string promocode, int customerId = 0, int addressId = 0);
+
+        /// <summary>
+        ////Изменение статуса заказа
+        /// </summary>
+        /// <param name="orderId"> Id заказа</param>
+        /// <param name="orderStatus"> Новый статус заказа</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult ChangeOrderStatus(int orderId, string orderStatus);
+
+        /// <summary>
+        /// Удаление заказа
+        /// </summary>
+        /// <param name="id">Id заказа</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult RemoveOrder(int id);
     }
     public class OrderService : IOrderService
     {
         private readonly IMapper _mapper;
         private readonly PizzaDbContext _context;
         private readonly ISpecialOfferService _offer;
-        public OrderService(IMapper mapper, PizzaDbContext context, ISpecialOfferService offer)
+        private readonly ISubject _subject;
+        public OrderService(IMapper mapper, PizzaDbContext context, ISpecialOfferService offer, ISubject subject)
         {
             _mapper = mapper;
             _context = context;
             _offer = offer;
+            _subject = subject;
         }
 
         private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
@@ -41,16 +79,7 @@ namespace Web_api_pizza.Services
             {"Canceled", OrderStatusEnum.Canceled}
         };
 
-        //поменял когда делал сайт
-        //private readonly Dictionary<string, OrderStatusEnum> OrderStatusesDic = new Dictionary<string, OrderStatusEnum>
-        //{
-        //    {"Новый", OrderStatusEnum.New },
-        //    {"Подтвержден", OrderStatusEnum.Confirmed },
-        //    {"Готовится", OrderStatusEnum.Preparing },
-        //    {"В пути", OrderStatusEnum.OnTheWay},
-        //    {"Доставлен", OrderStatusEnum.Delivered},
-        //    {"Отменен", OrderStatusEnum.Canceled}
-        //};
+        
         private readonly Dictionary<OrderStatusEnum,IEnumerable<OrderStatusEnum>> _statusChangeRule = new Dictionary<OrderStatusEnum, IEnumerable<OrderStatusEnum>>
         {
             { OrderStatusEnum.New, new[]{ OrderStatusEnum.Confirmed, OrderStatusEnum.Canceled } },
@@ -60,11 +89,7 @@ namespace Web_api_pizza.Services
             { OrderStatusEnum.Delivered, new OrderStatusEnum[] { } },
             { OrderStatusEnum.Canceled, new OrderStatusEnum[] { } },
         };
-        //поменял когда делал сайт
-        //private readonly List<string> StatusList = new List<string>()
-        //{
-        //    "Новый","Подтвержден","Готовится","В пути","Доставлен","Отменен"
-        //};
+        
         private readonly List<string> StatusList = new List<string>()
         {
             "New","Confirmed","Preparing","OnTheWay","Delivered","Canceled"
@@ -79,7 +104,7 @@ namespace Web_api_pizza.Services
                     .ThenInclude(p => p.Dish)
                 .Include(o => o.AddressOrder)
                     .ThenInclude(a => a.Address)
-                .OrderByDescending(o => o)
+                .OrderByDescending(o => o.CreateTime)
                 .AsQueryable();
 
             if (customerId != 0)
@@ -90,31 +115,8 @@ namespace Web_api_pizza.Services
             orders = filter.Filters(orders);
             
 
-            List<OrderEntity> ordersEntity;
-            ordersEntity = orders.OrderByDescending(o => o.CreateTime).ToList();
+            List<OrderEntity> ordersEntity = orders.ToList();
 
-            //Console.WriteLine("Это объект из базы");
-            //foreach (var o in ordersEntity)
-            //{
-            //    if (o.Customer != null)
-            //    {
-            //        Console.WriteLine(o.Customer.Name);
-            //    }
-
-            //    Console.WriteLine($"продукты заказа {o.Id}");
-            //    foreach (var p in o.Products)
-            //    {
-            //        Console.WriteLine(p.Dish.ProductName);
-            //        Console.WriteLine(p.Dish.Price);
-            //    }
-            //    Console.WriteLine("адрес");
-
-            //    if (o.AddressOrder != null)
-            //    {
-            //        Console.WriteLine(o.AddressOrder.Address.City);
-            //    }
-
-            //}
             var ordersDTO = _mapper.Map<List<OrderDTO>>(ordersEntity);
             
             return ordersDTO;
@@ -134,42 +136,46 @@ namespace Web_api_pizza.Services
             return orderDTO;
         }
 
-        public string ChangeOrderStatus(int orderId, string orderStatus)
+        public OperationResult ChangeOrderStatus(int orderId, string orderStatus)
         {
             var order = _context.Orders.FirstOrDefault(o => o.Id == orderId);
-            string message;
+
             if(order == null)
             {
-                message = null;
-                return message;
+                return null;
             }
+
+            var result = new OperationResult(false);
+
             if(!StatusList.Contains(orderStatus))
             {
-                message = "BadStatus";
-                return message;
+                result.Message = "Неверно указан статус заказа";
+                return result;
             }
             var newStatus = OrderStatusesDic[orderStatus];
             var alowedStatus = _statusChangeRule[order.Status];
-            if (alowedStatus.Contains(newStatus))
+
+            if (!alowedStatus.Contains(newStatus))
             {
-                order.Status = newStatus;
-                _context.SaveChanges();
-                message = "Статус изменен";
-                return message;
+                result.Message = "Нельзя изменить на выбраный статус";
+                return result;
             }
-            else
-            {
-                message = "BadStatus";
-                return message;
-            }
+
+            order.Status = newStatus;
+            _context.SaveChanges();
+
+            result.IsSuccess = true;
+            result.Message = "Статус изменен";
+
+            return result;
         }
         
-        public string CreateOrder(List<DishDTO> dishes, string promocode, int customerId, int addressId)
+        public OperationResult CreateOrder(List<DishDTO> dishes, string promocode, int customerId, int addressId)
         {
             var resultValidation = OrderValidate(dishes, customerId, addressId, promocode);
             if (resultValidation.IsSuccess == false)
             {
-                return resultValidation.Message;
+                return resultValidation;
             }
 
             var order = CreateOrderDishes(dishes);
@@ -179,19 +185,6 @@ namespace Web_api_pizza.Services
                 order.DiscountSum = checkOfferResult.DiscountSum;
                 order.TotalSum -= checkOfferResult.DiscountSum;
             }
-
-            //if (promocode != null)
-            //{
-            //    //var checkOfferResult = (ResultOfferCheck)_offer.CheckComplianceSpecialOffer(dishes, promocode);
-            //    var checkOfferResult = _offer.CheckComplianceSpecialOffer(dishes, promocode);
-            //    var checkOfferResult1 = (ResultOfferCheck)checkOfferResult;
-            //    if (checkOfferResult.IsSuccess == false)
-            //    {
-            //        return checkOfferResult.Message;
-            //    }
-            //    order.DiscountSum = checkOfferResult1.DiscountSum;
-            //    order.TotalSum -= checkOfferResult1.DiscountSum;
-            //}
 
             if (customerId != 0)
             {
@@ -210,30 +203,30 @@ namespace Web_api_pizza.Services
 
             _context.SaveChanges();
 
-            string message = "Заказ создан";
-            return message;
+            _subject.Notify();
+
+            var result = new OperationResult(true, "Заказ создан");
+            return result;
         }
 
-        public string RemoveOrder(int id)
+        public OperationResult RemoveOrder(int id)
         {
-            string message;
-            
             var order = _context.Orders.FirstOrDefault(o => o.Id == id);
+
             if(order == null)
             {
-                message = null;
-                return message;
+                return null;
             }
-            else
-            {
-                _context.Orders.Remove(order);
-                _context.SaveChanges();
-                message = "Заказ удален";
-                return message;
-            }
+
+            _context.Orders.Remove(order);
+            _context.SaveChanges();
+
+            var result = new OperationResult(true, "Заказ удален");
+            return result;
+            
         }
 
-            private OperationResult OrderValidate(List<DishDTO> dishes, int customerId, int addressId, string promocode)
+        private OperationResult OrderValidate(List<DishDTO> dishes, int customerId, int addressId, string promocode)
         {
             var result = new OperationResult(false);
 

@@ -1,9 +1,7 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Web_api_pizza.Filters;
 using Web_api_pizza.Services;
 using Web_api_pizza.Storage.DTO;
-using Web_api_pizza.Storage.Enums;
 
 namespace Web_api_pizza.Controllers
 {
@@ -16,7 +14,13 @@ namespace Web_api_pizza.Controllers
         {
             _menuService = menuService;
         }
-        
+
+        /// <summary>
+        /// Получения списка блюд
+        /// </summary>
+        /// <param name="filter">Опциональный параметр. Фильтр по названию блюд, категории</param>
+        /// <see cref="DishFilter"/>
+        /// <response code="200"> Список блюд</response>
         [HttpGet("fullmenu")]
         public IActionResult GetMenu([FromQuery] DishFilter filter)
         {
@@ -24,6 +28,13 @@ namespace Web_api_pizza.Controllers
             return Ok(menu);
         }
 
+        /// <summary>
+        /// Получение данных одного блюда
+        /// </summary>
+        /// <param name="id">Id блюда</param>
+        /// <response code="200">Данные блюда</response>
+        /// <response code="400">Неверно указан Id блюда</response>
+        /// <response code="404">Блюдо не найдено</response>
         [HttpGet("onedish/{id}")]
         public IActionResult GetDish(int id)
         {
@@ -39,7 +50,14 @@ namespace Web_api_pizza.Controllers
                 return Ok(dish);
         }
 
-        
+        /// <summary>
+        /// Добавление блюда в меню
+        /// </summary>
+        /// <param name="dish">Данные блюда</param>
+        /// <response code="200">Результат операции в виде объекта OperationResult(результат bool, сообщение)</response>
+        /// <response code="400">Неверно указаны данные блюда
+        /// Блюдо уже есть в меню
+        /// Неверно указана категория блюда</response>
         [HttpPost("add")]
         public IActionResult AddToMenu(DishDTO dish)
         {
@@ -58,10 +76,20 @@ namespace Web_api_pizza.Controllers
                 return BadRequest(ModelState);
             }
             var result = _menuService.AddToMenu(dish);
-            return Ok(result.Message);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
         }
 
-       
+        /// <summary>
+        /// Изменение данных блюда.
+        /// </summary>
+        /// <param name="dish">Блюдо с измененными данными</param>
+        /// <response code="200">Результат операции в виде объекта OperationResult(результат bool, сообщение)</response>
+        /// <response code="400">Неверно указаны данные блюда</response>
+        /// <response code="404">Блюдо не найдено</response>
         [HttpPut("edit")]
         public IActionResult Edit(DishDTO dish)
         {
@@ -69,10 +97,10 @@ namespace Web_api_pizza.Controllers
             {
                 ModelState.AddModelError("Id", $"Недопустимое значение Id - \"{dish.Id}\"");
             }
-            //if(dish.Price <= 0)
-            //{
-            //    ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
-            //}
+            if (dish.Price <= 0)
+            {
+                ModelState.AddModelError("Price", $"Недопустимое значение цены - \"{dish.Price}\"");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -85,12 +113,18 @@ namespace Web_api_pizza.Controllers
             }
             if(result.IsSuccess == false)
             {
-                return BadRequest(result.Message);
+                return BadRequest(result);
             }
-            return Ok(result.Message);
+            return Ok(result);
         }
 
-      
+        /// <summary>
+        /// Удаление блюда из меню.
+        /// </summary>
+        /// <param name="id">Id блюда</param>
+        /// <response code="200">Результат операции в виде объекта OperationResult(результат bool, сообщение)</response>
+        /// <response code="400">Неверно указан Id блюда</response>
+        /// <response code="404">Блюдо не найдено</response>
         [HttpDelete("delete/{id}")]
         public IActionResult Delete(int id)
         {
@@ -103,7 +137,7 @@ namespace Web_api_pizza.Controllers
             {
                 return NotFound($"Блюдо не найдено Id - \"{id}\"");
             }
-            return Ok(result.Message);
+            return Ok(result);
             
         }
     }

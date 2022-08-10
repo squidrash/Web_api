@@ -18,6 +18,11 @@ namespace Web_api_pizza.Controllers
             _specialOfferService = specialOfferService;
         }
 
+        /// <summary>
+        /// Получения списка акций
+        /// </summary>
+        /// <param name="filter">Опциональный параметр. Фильтрация по типу акции</param>
+        /// <response code="200">Список акций</response>
         [HttpGet("all")]
         public IActionResult GetAllSpecialOffers([FromQuery] SpecialOfferFilter filter)
         {
@@ -25,6 +30,13 @@ namespace Web_api_pizza.Controllers
             return Ok(orders);
         }
 
+        /// <summary>
+        /// Получение данных конкретной акции
+        /// </summary>
+        /// <param name="id"> Id акции</param>
+        /// <response code="200">Акцию со всеми данными</response>
+        /// <response code="400">Неверно указан Id акции</response>
+        /// <response code="404"> Акция не найдена</response>
         [HttpGet("{id}")]
         public IActionResult GetSpecialOffer(int id)
         {
@@ -46,6 +58,12 @@ namespace Web_api_pizza.Controllers
             return Ok(offer);
         }
 
+        /// <summary>
+        /// Добавление новой акции
+        /// </summary>
+        /// <param name="specialOffer">Данные акции</param>
+        /// <response code="200">Акция добавлена</response>
+        /// <response code="400">Ошибки связаные с неверно указаными данными акции</response>
         [HttpPost("newOffer")]
         public IActionResult AddNewSpecialOffer(SpecialOfferDTO specialOffer)
         {
@@ -61,12 +79,19 @@ namespace Web_api_pizza.Controllers
             var result = _specialOfferService.AddNewSpecialOffer(specialOffer);
             if (result.IsSuccess == false)
             {
-                return BadRequest(result.Message);
+                return BadRequest(result);
             }
 
-            return Ok(result.Message);
+            return Ok(result);
         }
 
+        /// <summary>
+        /// Изменение данных акции
+        /// </summary>
+        /// <param name="specialOffer">Данные акции</param>
+        /// <response code="200">Акция изменена</response>
+        /// <response code="400">Ошибки связаные с неверно указаными данными акции</response>
+        /// <response code="404">Акция не найдена</response>
         [HttpPut("edit")]
         public IActionResult EditCustomer(SpecialOfferDTO specialOffer)
         {
@@ -94,10 +119,18 @@ namespace Web_api_pizza.Controllers
             }
             if(result.IsSuccess == false)
             {
-                return BadRequest(result.Message);
+                return BadRequest(result);
             }
-            return Ok(result.Message);
+            return Ok(result);
         }
+
+        /// <summary>
+        /// Удаление акции
+        /// </summary>
+        /// <param name="specialOfferId">Id акции</param>
+        /// <response code="200">Акция удалена</response>
+        /// <response code="400">неверно указан Id акции</response>
+        /// <response code="404">акция не найдена</response>
         [HttpDelete("delete/{id}")]
         public IActionResult DeleteSpecialOffer(int id)
         {
@@ -109,13 +142,21 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var message = _specialOfferService.DeleteSpecialOffer(id);
-            if (message == null)
+            var result = _specialOfferService.DeleteSpecialOffer(id);
+            if (result == null)
             {
                 return NotFound("Акция не найдена");
             }
-            return Ok(message);
+            return Ok(result);
         }
+
+        /// <summary>
+        /// Проверка соответствия списка блюд условиям акции
+        /// </summary>
+        /// <param name="dishes">Список проверяемых блюд</param>
+        /// <param name="promoCode">промокод акции по которой будет проводиться проверка</param>
+        /// <response code="200">Результат проверки</response>
+        /// <response code="400">Ошибки связаные с неверно указаынм промокодом, отсутсвием блюд для проверки соответсвия и несоответсвии условиям акции</response>
         [HttpPost("checkOffer")]
         public IActionResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode)
         {
@@ -134,7 +175,7 @@ namespace Web_api_pizza.Controllers
             var result = _specialOfferService.CheckComplianceSpecialOffer(dishes, promoCode);
             if(result.IsSuccess == false)
             {
-                return BadRequest(result.Message);
+                return BadRequest(result);
             }
             return Ok(result);
         }

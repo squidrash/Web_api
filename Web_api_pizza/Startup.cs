@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Web_api_pizza.OrderObserver;
 using Web_api_pizza.Services;
 using Web_api_pizza.Storage.DTO;
 
@@ -54,6 +55,9 @@ namespace Web_api_pizza
             services.AddTransient<ISpecialOfferService, SpecialOfferService>();
             services.AddTransient<IDishCategoryService, DishCategoryService>();
             services.AddTransient<IDishImageService, DishImageService>();
+
+            services.AddSingleton<INotification, NewOrderObserver>();
+            services.AddSingleton<ISubject, NewOrderSubject>();
 
             var imageDirPath = Configuration.GetSection("ImagesServiceOptions");
             services.Configure<ImagesServiceOptions>(imageDirPath);
