@@ -17,6 +17,11 @@ namespace Web_api_pizza.Controllers
             _customerService = customerService;
         }
 
+        /// <summary>
+        /// Получение списка пользователей
+        /// </summary>
+        /// <param name="filter">Опциональный параметр с фильтрами по имени, фамилии, номеру телефона</param>
+        /// <response code="200">Список пользователей</response>
         [HttpGet("getAll")]
         public IActionResult GetAllCustomers([FromQuery] CustomerFilter filter)
         {
@@ -24,8 +29,15 @@ namespace Web_api_pizza.Controllers
             return Ok(customers);
         }
 
+        /// <summary>
+        /// Получение личных данных пользователя
+        /// </summary>
+        /// <param name="id"> Id пользователя</param>
+        /// <response code="200">Личные данные конкретного пользователя</response>
+        /// <response code="400">Недопустимое значение Id пользователя</response>
+        /// <response code="404">Пользователь не найден</response>
         [HttpGet("getOne/{id}")]
-        public IActionResult GetoneCustomers(int id)
+        public IActionResult GetOneCustomers(int id)
         {
             if (id <= 0)
             {
@@ -38,7 +50,14 @@ namespace Web_api_pizza.Controllers
             }
             return Ok(customer);
         }
-        // попозже разобраться как получать все в ДТО
+
+        /// <summary>
+        /// Получение данных пользователя, включая данные заказов и адреса доставки
+        /// </summary>
+        /// <param name="id">Id пользователя</param>
+        /// <response code="200">Данные пользователя</response>
+        /// <response code="400">Недопустимое значение Id пользователя</response>
+        /// <response code="404">Пользователь не найден</response>
         [HttpGet("getOneWithInfo/{id}")]
         public IActionResult GetOneWithInfo(int id)
         {
@@ -55,12 +74,32 @@ namespace Web_api_pizza.Controllers
             return Ok(customer);
         }
 
+        /// <summary>
+        /// Добавление пользователя в БД
+        /// </summary>
+        /// <param name="customer">Пользователь в виде объекта CustomerDTO</param>
+        /// <see cref="CustomerDTO"/>
+        /// <response code="200">Пользователь зарегистрирован</response>
+        /// <response code="400">Пользователь уже существует</response>
         [HttpPost("registration")]
         public IActionResult RegistrationOneCustomer(CustomerDTO customer)
         {
-            var mess = _customerService.RegistrationCustomer(customer);
-            return Ok(mess);
+            var result = _customerService.RegistrationCustomer(customer);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
         }
+
+        /// <summary>
+        /// Изменение данных пользователя
+        /// </summary>
+        /// <param name="customer">Пользователь в виде объекта CustomerDTO</param>
+        /// <see cref="CustomerDTO"/>
+        /// <response code="200">Данные пользователя изменены</response>
+        /// <response code="400">Ошибки связаные с недопустимыми значениями полей Id, Discount или отсутвием данных для изменения</response>
+        /// <response code="404">Пользователь не найден</response>
 
         [HttpPut("edit")]
         public IActionResult EditCustomer(CustomerDTO customer)
@@ -78,14 +117,25 @@ namespace Web_api_pizza.Controllers
                 return BadRequest(ModelState);
             }
 
-            var  message =_customerService.EditCustomer(customer);
-            if(message == null)
+            var  result =_customerService.EditCustomer(customer);
+            if(result == null)
             {
                 return NotFound($"Пользователь не найден Id - \"{customer.Id}\"");
             }
-            return Ok(message);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
         }
 
+        /// <summary>
+        /// Удаление пользователя
+        /// </summary>
+        /// <param name="id">Id пользователя</param>
+        /// <response code="200">Пользователь удален</response>
+        /// <response code="400">Недопустимое значение Id пользователя</response>
+        /// <response code="404">Пользователь не найден</response> 
         [HttpDelete("delete/{id}")]
         public IActionResult DeleteCustomer(int id)
         {
@@ -97,14 +147,24 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var message = _customerService.DeleteCustomer(id);
-            if(message == null)
+            var result = _customerService.DeleteCustomer(id);
+            if(result == null)
             {
                 return NotFound("Пользователь не найден");
             }
-            return Ok(message);
+            return Ok(result);
         }
 
+        /// <summary>
+        /// Создание связи пользователь-адрес в БД
+        /// </summary>
+        /// <param name="customerId">Id пользователя</param>
+        /// <param name="address">Адрес в виде объекта AddressDTO</param>
+        /// <see cref="AddressDTO"/>
+        /// <response code="200">Связь пользователь-адрес создана</response>
+        /// <response code="400">Ошибки связаные с недопустимыми значениями поля customerId,
+        /// неверно указаным адресом и Id пользователя,
+        /// а также уже существующей связи пользователь-адрес</response>
         [HttpPost("createConnection")]
         public IActionResult CreateCustomerAddress(int customerId, AddressDTO address)
         {
@@ -112,13 +172,23 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest($"Недопустимое значение Id пользователя - \"{customerId}\"");
             }
-            var message = _customerService.CreateCustomerAddress(customerId, address);
-            if(message == null)
+
+            var result = _customerService.CreateCustomerAddress(customerId, address);
+            if (result.IsSuccess == false)
             {
-                return BadRequest("Адрес не найден");
+                return BadRequest(result);
             }
-            return Ok(message);
+            return Ok(result);
         }
+
+        /// <summary>
+        /// Удаление связи пользователь-адрес в БД
+        /// </summary>
+        /// <param name="customerId">Id пользователя</param>
+        /// <param name="addressId">Id адреса</param>
+        /// <response code="200">Связь пользователь-адрес удалена</response>
+        /// <response code="400"Ошибки связаные с недопустимыми значениями Id пользователя и адреса</response>
+        /// <response code="404">Связь пользователь-адрес не найдена</response>
         [HttpDelete("removeConnection")]
         public IActionResult RemoveCustomerAddress(int customerId, int addressId)
         {
@@ -135,39 +205,13 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var message = _customerService.RemoveCustomerAddress(customerId, addressId);
-            if(message == null)
+            var result = _customerService.RemoveCustomerAddress(customerId, addressId);
+            if(result == null)
             {
-                return BadRequest($" Связь между клиентом с ID-{customerId} и адресом с ID-{addressId} не найдена");
+                return NotFound($" Связь между пользователем с ID-{customerId} и адресом с ID-{addressId} не найдена");
             }
-            return Ok(message);
+            return Ok(result);
 
-        }
-        [HttpPut("editConnection")]
-        public IActionResult EditCustomerAddress(int customerId, int oldAddressId, AddressDTO newAddress)
-        {
-            if (customerId <= 0)
-            {
-                ModelState.AddModelError("customerId", $"Недопустимое значение Id пользователя - \"{customerId}\"");
-            }
-            if (oldAddressId <= 0)
-            {
-                ModelState.AddModelError("addressId", $"Недопустимое значение Id адреса - \"{oldAddressId}\"");
-            }
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            var message = _customerService.EditCustomerAddress(customerId, oldAddressId, newAddress);
-            if(message == "nullNewAddress")
-            {
-                return BadRequest("Адрес не найден");
-            }
-            if(message == "nullCustomerAddress")
-            {
-                return BadRequest($" Связь между клиентом с ID-{customerId} и адресом с ID-{oldAddressId} не найдена");
-            }
-            return Ok(message);
         }
     }
 }

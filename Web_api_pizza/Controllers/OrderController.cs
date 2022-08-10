@@ -19,8 +19,14 @@ namespace Web_api_pizza.Controllers
             _orderService = orderService;
         }
 
-        
-        //работает
+        /// <summary>
+        /// Получение списка заказов
+        /// </summary>
+        /// <param name="filter">
+        /// Опциональный параметр.
+        /// Фильтрация по статусу, наличию клиента и адреса
+        /// </param>
+        /// <response code="200"> Список заказов</response>
         [HttpGet("all")]
         public IActionResult GetAllOrders([FromQuery] OrderFilter filter)
         {
@@ -28,6 +34,15 @@ namespace Web_api_pizza.Controllers
             return Ok(orders);
         }
 
+        /// <summary>
+        /// Получение списка заказов одного пользователя
+        /// </summary>
+        /// <param name="id"> Id пользователя</param>
+        /// <param name="filter">Опциональный параметр.
+        /// Фильтрация по статусу, адреса</param>
+        /// <response code="200"></response>
+        /// <response code="400">Неверно указан Id пользователя</response>
+        /// <response code="404">Пользователь не найден</response>
         [HttpGet("customer/{id}/")]
         public IActionResult CustomerOrders(int id, [FromQuery] OrderFilter filter)
         {
@@ -48,8 +63,14 @@ namespace Web_api_pizza.Controllers
             }
             return Ok(orders);
         }
-        
-        //работает
+
+        /// <summary>
+        /// Получение данных конкретного заказа
+        /// </summary>
+        /// <param name="id">Id заказа</param>
+        /// <response code="200">Данные конкретного заказа</response>
+        /// <response code="400">Неверно указан Id заказа</response>
+        /// <response code="404">Заказ не найден</response>
         [HttpGet("specific/{id}")]
         public IActionResult GetOneOrder(int id)
         {
@@ -69,8 +90,14 @@ namespace Web_api_pizza.Controllers
             return Ok(order);
         }
 
-        //работает
-        //проработать алгоритм изменения статуса
+        /// <summary>
+        ////Изменение статуса заказа
+        /// </summary>
+        /// <param name="orderId"> Id заказа</param>
+        /// <param name="orderStatus"> Новый статус заказа</param>
+        /// <response code="200">Сообщение об успешном изменени статуса</response>
+        /// <response code="400">Ошибки связаные с неверно указаным Id заказа, статуса, невозможностью изменить статус на новый</response>
+        /// <response code="404">Заказ не найден</response>
         [HttpPut("changeStatus")]
         public IActionResult ChangeStatus(int orderId, string orderStatus)
         {
@@ -86,19 +113,32 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var status = _orderService.ChangeOrderStatus(orderId, orderStatus);
-            if(status == null)
+            var result = _orderService.ChangeOrderStatus(orderId, orderStatus);
+            if(result == null)
             {
                 return NotFound($"Заказ не найден Id — {orderId}");
             }
-            if(status == "BadStatus")
+            if(result.IsSuccess == false)
             {
-                return BadRequest("Недопустимый статус");
+                return BadRequest(result);
             }
-            return Ok(status);
+            return Ok(result);
         }
 
-        //работают все 3 
+        /// <summary>
+        /// Создание нового заказа
+        /// </summary>
+        /// <param name="dishes"> Список блюд которые входят в казаз</param>
+        /// <param name="promocode">Опциональный параметр. Промокод на скидку</param>
+        /// <param name="customerId">Опциональный параметр. Id пользователя, сделавшего заказ</param>
+        /// <param name="addressId">Опциональный параметр. Id адреса доставки</param>
+        /// <response code="200">Сообщение об успешном создании заказа</response>
+        /// <response code="400">Возможные ошибки:
+        /// 1)неверно указаны Id пользователя и адреса,
+        /// 2)блюда не указаны или их нет в БД,
+        /// 3)если введен промокон:
+        ///     3а) акция не найдена
+        ///     3b) блюда не соответствуют условиям акции</response>
         [HttpPost("create")]
         public IActionResult CreateOrder(List<DishDTO> dishes, [FromQuery] string promoCode, [FromQuery] int customerId, [FromQuery] int addressId)
         {
@@ -118,26 +158,22 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var order = _orderService.CreateOrder(dishes, promoCode, customerId, addressId);
-            if (order == "NullDish")
+            var result = _orderService.CreateOrder(dishes, promoCode, customerId, addressId);
+            if (result.IsSuccess == false)
             {
-                return BadRequest($"Ошибка при создании заказа: некоторых блюд нет в меню {order}");
+                return BadRequest(result);
             }
-            if (order == "NullMenu")
-            {
-                return BadRequest($"Ошибка при создании заказа: Нет блюд {order}");
-            }
-            if (order == "NullCustomer")
-            {
-                return BadRequest($"Ошибка при создании заказа: Клиент не найден {order}");
-            }
-            if (order == "NullAddress")
-            {
-                return BadRequest($"Ошибка при создании заказа: Адрес не найден {order}");
-            }
-            return Ok(order);
+            
+            return Ok(result);
         }
-        //работает
+
+        /// <summary>
+        /// Удаление заказа
+        /// </summary>
+        /// <param name="id">Id заказа</param>
+        /// <response code="200">Сообщение об успешном удалении</response>
+        /// <response code="400">Неверно указан Id заказа</response>
+        /// <response code="404">Заказ не найден</response>
         [HttpDelete("delete/{id}")]
         public IActionResult Delete(int id)
         {
@@ -149,12 +185,12 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var order = _orderService.RemoveOrder(id);
-            if(order == null)
+            var result = _orderService.RemoveOrder(id);
+            if(result == null)
             {
                 return NotFound($"Заказ не найден Id — \"{id}\"");
             }
-            return Ok(order);
+            return Ok(result);
         }
     }
 }

@@ -18,6 +18,13 @@ namespace Web_api_pizza.Controllers
             _addressService = addressService;
         }
 
+        /// <summary>
+        /// Получение адреса по Id
+        /// </summary>
+        /// <param name="id"> Id адреса</param>
+        /// <response code="200">Конкретный адрес</response>
+        /// <response cpdle="400">Неверно указан Id адреса </response>
+        /// <response code="404">Адрес не найден</response>
         [HttpGet("{id}")]
         public IActionResult GetAddress(int id)
         {
@@ -33,6 +40,14 @@ namespace Web_api_pizza.Controllers
             return Ok(address);
         }
 
+        /// <summary>
+        /// Поиск адреса по городу, улице, дому...
+        /// </summary>
+        /// <param name="address">адрес в виде объекта класса AddressDTO</param>
+        /// <see cref="AddressDTO"/>
+        /// <response code="200">Конкретный адрес</response>
+        /// <response code="400">Неверно указаны данные адреса</response>
+        /// <response code="404">Адрес не найден</response>
         [HttpPost("find")]
         public IActionResult FindAddress(AddressDTO address)
         {
@@ -64,7 +79,13 @@ namespace Web_api_pizza.Controllers
             return Ok(result);
         }
 
-        
+        /// <summary>
+        /// Добавление адреса в БД
+        /// </summary>
+        /// <param name="address">адрес в виде объекта класса AddressDTO</param>
+        /// <see cref="AddressDTO"/>
+        /// <response code="200">Сообщение о результате операции(адрес добавлен)</response>
+        /// <response code="400">Адрес уже есть в базе</response>
         [HttpPost("Create")]
         public IActionResult CreateAddress(AddressDTO address)
         {
@@ -72,10 +93,23 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var message = _addressService.CreateDeliveryAddress(address);
-            return Ok(message);
+            var result = _addressService.CreateDeliveryAddress(address);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
 
+        /// <summary>
+        /// Измение адреса 
+        /// </summary>
+        /// <param name="address">адрес в виде объекта класса AddressDTO</param>
+        /// <see cref="AddressDTO"/>
+        /// <response code="200">Адрес изменен</response>
+        /// <response code="400">Неверно указаны даннные адреса</response>
+        /// <response code="404">Адрес не найден</response>
         [HttpPut("Edit")]
         public IActionResult EditAddress(AddressDTO address)
         {
@@ -83,14 +117,25 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest($"Недопустимое значение Id - \"{address.Id}\"");
             }
-            var message = _addressService.EditDeliveryAddress(address);
-            if(message == null)
+            var result = _addressService.EditDeliveryAddress(address);
+            if(result == null)
             {
                 return NotFound($"Адрес не найден Id - \"{address.Id}\"");
             }
-            return Ok(message);
+            if(result.IsSuccess == false)
+            {
+                return BadRequest(result);
+            }
+            return Ok(result);
         }
 
+        /// <summary>
+        /// Удалить адрес из БД
+        /// </summary>
+        /// <param name="id">Id адреса</param>
+        /// <response code="200">Адрес удален</response>
+        /// <response code="400">Неверно указан Id адреса</response>
+        /// <response code="404">Адрес не найден</response>
         [HttpDelete("Delete/{id}")]
         public IActionResult RemoveAddress(int id)
         {
@@ -98,12 +143,12 @@ namespace Web_api_pizza.Controllers
             {
                 return BadRequest($"Недопустимое значение Id - \"{id}\"");
             }
-            var message =  _addressService.RemoveDeliveryAddress(id);
-            if (message == null)
+            var result =  _addressService.RemoveDeliveryAddress(id);
+            if (result == null)
             {
                 return NotFound($"Адрес найден Id - \"{id}\"");
             }
-            return Ok(message);
+            return Ok(result);
         }
     }
 }

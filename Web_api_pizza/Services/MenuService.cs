@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
@@ -12,17 +11,45 @@ namespace Web_api_pizza.Services
 {
     public interface IMenuService
     {
+        /// <summary>
+        /// Получения списка блюд
+        /// </summary>
+        /// <param name="filter">Опциональный параметр. Фильтр по названию блюд, категории</param>
+        /// <see cref="DishFilter"/>
+        /// <returns>Список блюд</returns>
         public List<MenuDTO> GetMenu(DishFilter filter);
-        //public object GetFullMenu(DishFilter filter);
 
+        /// <summary>
+        /// Получение данных одного блюда
+        /// </summary>
+        /// <param name="id">Id блюда</param>
+        /// <returns>Данные конкретного блюда</returns>
         public DishDTO GetOneDish(int id);
+
+        /// <summary>
+        /// Удаление блюда из меню. Блюдо помечается в БД как неактивное
+        /// </summary>
+        /// <param name="id">Id блюда</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
         public OperationResult RemoveFromMenu(int id);
+
+        /// <summary>
+        /// Изменение данных блюда.
+        /// Создается новый измененнный экземпляр блюда.
+        /// Старое блюдо остается в базе и помечается как неактивное.
+        /// </summary>
+        /// <param name="dish">Блюдо с измененными данными</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
         public OperationResult EditMenu(DishDTO dish);
-        public OperationResult AddToMenu(DishDTO dishDTO);
-        //добавить сразу несколько
-        //проверить нужен ли он
-        //public void AddToMenu(List<DishDTO> dishesDTOs);
+
+        /// <summary>
+        /// Добавление блюда в меню
+        /// </summary>
+        /// <param name="dish">Данные блюда</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult AddToMenu(DishDTO dish);
     }
+
     public class MenuService : IMenuService
     {
         private readonly IMapper _mapper;
@@ -33,7 +60,6 @@ namespace Web_api_pizza.Services
             _mapper = mapper;
         }
 
-        //2 версия
         public List<MenuDTO> GetMenu(DishFilter filter)
         {
             var menu = _context.Dishes
@@ -62,45 +88,30 @@ namespace Web_api_pizza.Services
 
                 }).ToList();
 
-
-            //var menuDTO = _mapper.Map<List<DishDTO>>(menuEntity);
-
             return fullMenu;
         }
-
-        //1 версия
-        //public List<DishDTO> GetMenu(DishFilter filter)
-        //{
-        //    var menu = _context.Dishes
-        //        .Include(x => x.Category)
-        //        .OrderBy(x => x.CategoryId)
-        //        .AsQueryable();
-
-        //    menu = filter.Filters(menu);
-        //    var menuEntity = menu.ToList();
-
-        //    var menuDTO = _mapper.Map<List<DishDTO>>(menuEntity);
-
-        //    return menuDTO;
-        //}
 
         public DishDTO GetOneDish(int id)
         {
             var dishEntity = _context.Dishes
                 .Include(x => x.Category)
                 .FirstOrDefault(d => d.Id == id);
+
             var dishDTO = _mapper.Map<DishDTO>(dishEntity);
             return dishDTO;
         }
         public OperationResult RemoveFromMenu(int id)
         {
             var removeDish = _context.Dishes.FirstOrDefault(m => m.Id == id);
+
             if (removeDish == null || removeDish.IsActive == false)
             {
                 return null;
             }
+
             removeDish.IsActive = false;
             _context.SaveChanges();
+
             var result = new OperationResult(true, "Блюдо удалено");
             return result;
 
@@ -108,6 +119,7 @@ namespace Web_api_pizza.Services
         public OperationResult EditMenu(DishDTO dish)
         {
             var dishEntity = _context.Dishes.FirstOrDefault(x => x.Id == dish.Id);
+
             if(dishEntity == null)
             {
                 return null;
@@ -138,30 +150,14 @@ namespace Web_api_pizza.Services
             _context.SaveChanges();
             return new OperationResult(true, "Блюдо изменено");
         }
-        //public OperationResult EditMenu(DishDTO dish)
-        //{
-        //    var result = RemoveFromMenu(dish.Id.Value);
-
-        //    if (result == null)
-        //    {
-        //        return null;
-        //    }
-
-
-        //    var editableDish = _mapper.Map<DishEntity>(dish);
-        //    editableDish.CategoryId = dish.Category.Id;
-        //    editableDish.Id = 0;
-
-        //    _context.Dishes.Add(editableDish);
-        //    _context.SaveChanges();
-        //    return new OperationResult(true, "Блюдо изменено");
-        //}
+        
         public OperationResult AddToMenu(DishDTO dish)
         {
             var dishEntity = _context.Dishes
                 .FirstOrDefault(d => d.ProductName == dish.ProductName && d.IsActive == true);
 
             var result = new OperationResult(false);
+
             if (dishEntity != null)
             {
                 result.Message = "Блюдо уже есть в меню";
@@ -193,21 +189,6 @@ namespace Web_api_pizza.Services
             return result;
             
             
-        }
-        public void AddToMenu(List<DishDTO> dishesDTOs)
-        {
-            var dishesEntities = _mapper.Map<List<DishDTO>, List<DishEntity>>(dishesDTOs);
-            foreach (var dish in dishesEntities)
-            {
-                var checkDish = _context.Dishes
-                .Where(d => d.ProductName == dish.ProductName)
-                .FirstOrDefault();
-                if(checkDish == null)
-                {
-                    _context.Dishes.Add(dish);
-                }
-            }
-            _context.SaveChanges();
         }
     }
 }

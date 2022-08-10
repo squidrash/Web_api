@@ -18,13 +18,48 @@ namespace Web_api_pizza.Services
 {
     public interface ISpecialOfferService
     {
+        /// <summary>
+        /// Получение данных конкретной акции
+        /// </summary>
+        /// <param name="id"> Id акции</param>
+        /// <returns>Конкретную акцию</returns>
         public SpecialOfferDTO GetSpecialOffer(int id);
+
+        /// <summary>
+        /// Получения списка акций
+        /// </summary>
+        /// <param name="filter">Опциональный параметр. Фильтрация по типу акции</param>
+        /// <returns>Список акций</returns>
         public List<SpecialOfferDTO> GetAllSpecialOffers(SpecialOfferFilter filter);
+
+        /// <summary>
+        /// Добавление новой акции
+        /// </summary>
+        /// <param name="specialOffer">Данные акции</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
         public OperationResult AddNewSpecialOffer(SpecialOfferDTO specialOffer);
+
+        /// <summary>
+        /// Изменение данных акции
+        /// </summary>
+        /// <param name="specialOffer">Данные акции</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
         public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer);
+
+        /// <summary>
+        /// Проверка соответствия списка блюд условиям акции
+        /// </summary>
+        /// <param name="dishes">Список проверяемых блюд</param>
+        /// <param name="promoCode">промокод акции по которой будет проводиться проверка</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
         public OperationResult CheckComplianceSpecialOffer(List<DishDTO> dishes, string promoCode);
 
-        public string DeleteSpecialOffer(int specialOfferId);
+        /// <summary>
+        /// Удаление акции
+        /// </summary>
+        /// <param name="specialOfferId">Id акции</param>
+        /// <returns>Результат операции в виде объекта OperationResult(результат bool, сообщение)</returns>
+        public OperationResult DeleteSpecialOffer(int specialOfferId);
     }
 
     public class SpecialOfferService : ISpecialOfferService
@@ -41,10 +76,9 @@ namespace Web_api_pizza.Services
         public SpecialOfferDTO GetSpecialOffer(int id)
         {
             var specialOffer = _context.Offers
-                .Where(so => so.Id == id)
                 .Include(so => so.MainDish)
                 .Include(so => so.ExtraDish)
-                .FirstOrDefault();
+                .FirstOrDefault(so => so.Id == id);
             var specialOfferDTO = _mapper.Map<SpecialOfferDTO>(specialOffer);
             return specialOfferDTO;
 
@@ -71,8 +105,7 @@ namespace Web_api_pizza.Services
             var result = new OperationResult(false);
 
             var specialOfferEntity = _context.Offers
-                .Where(x => x.PromoCode == specialOffer.PromoCode)
-                .FirstOrDefault();
+                .FirstOrDefault(x => x.PromoCode == specialOffer.PromoCode);
 
             if (specialOfferEntity != null)
             {
@@ -104,8 +137,7 @@ namespace Web_api_pizza.Services
         public OperationResult EditSpecialOffer(SpecialOfferDTO specialOffer)
         {
             var specialOfferEntity = _context.Offers
-                .Where(so => so.Id == specialOffer.Id)
-                .FirstOrDefault();
+                .FirstOrDefault(so => so.Id == specialOffer.Id);
             if (specialOfferEntity == null)
                 return null;
 
@@ -132,21 +164,18 @@ namespace Web_api_pizza.Services
             return result;
         }
 
-        public string DeleteSpecialOffer(int specialOfferId)
+        public OperationResult DeleteSpecialOffer(int specialOfferId)
         {
-            string message;
-
             var specialOfferEntity = _context.Offers
-                .Where(so => so.Id == specialOfferId)
-                .FirstOrDefault();
+                .FirstOrDefault(so => so.Id == specialOfferId);
             if (specialOfferEntity == null)
                 return null;
 
             _context.Offers.Remove(specialOfferEntity);
             _context.SaveChanges();
 
-            message = "Акция удалена";
-            return message;
+            var result = new OperationResult(true, "Акция удалена");
+            return result;
         }
 
         private readonly Dictionary<TypeOfferEnum, StrategyFactory> StrategyFactoryDic = new Dictionary<TypeOfferEnum, StrategyFactory>
@@ -209,12 +238,10 @@ namespace Web_api_pizza.Services
             if (anyDishesOnOffer)
             {
                 mainDish = _context.Dishes
-                   .Where(x => x.Id == specialOffer.MainDish.Id)
-                   .FirstOrDefault();
+                   .FirstOrDefault(x => x.Id == specialOffer.MainDish.Id);
 
                 extraDish = _context.Dishes
-                   .Where(x => x.Id == specialOffer.ExtraDish.Id)
-                   .FirstOrDefault();
+                   .FirstOrDefault(x => x.Id == specialOffer.ExtraDish.Id);
             }
             validationContext.SetStrategy(strategy);
             operationResult = validationContext.ValidateOffer(specialOffer, mainDish, extraDish);
